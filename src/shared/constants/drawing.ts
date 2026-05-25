@@ -4,6 +4,12 @@ export const DRAWING_LIMITS = {
   defaultBrushSize: 10,
 } as const;
 
+export const BUCKET_LIMITS = {
+  minSensitivity: 1,
+  maxSensitivity: 100,
+  defaultSensitivity: 50,
+} as const;
+
 export const QUICK_COLORS = [
   "#111827",
   "#ef4444",

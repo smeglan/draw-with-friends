@@ -1,7 +1,7 @@
 "use client";
 
 import { ToolIcon } from "@/canvas/components/atoms/ToolIcon";
-import type { DrawingTool } from "@/canvas/hooks/useDrawingBoard";
+import type { DrawingTool } from "@/canvas/types";
 
 type ToolButtonProps = {
   tool: DrawingTool;
