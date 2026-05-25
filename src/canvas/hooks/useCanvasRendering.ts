@@ -1,15 +1,16 @@
 "use client";
 
-import type { CanvasAction } from "@/canvas/types";
+import type { CanvasAction, Layer } from "@/canvas/types";
 import { isFillAction } from "@/canvas/types";
 import { renderStroke } from "@/canvas/utils/renderStroke";
+import { applyFillToCanvas } from "@/canvas/utils/floodFill";
 
 export function useCanvasRendering(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  fillLayerRef: React.RefObject<HTMLCanvasElement | null>,
   actionsRef: { current: CanvasAction[] },
   canvasBackgroundColorRef: { current: string },
   canvasScaleRef: { current: number },
+  layersRef: { current: Layer[] },
 ) {
   const redrawCanvas = () => {
     const canvas = canvasRef.current;
@@ -24,13 +25,27 @@ export function useCanvasRendering(
     context.fillStyle = canvasBackgroundColorRef.current;
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (fillLayerRef.current) {
-      context.drawImage(fillLayerRef.current, 0, 0);
-    }
+    const orderedLayerIds = layersRef.current
+      .filter((l) => l.visible)
+      .map((l) => l.id);
 
-    for (const action of actionsRef.current) {
-      if (!isFillAction(action)) {
-        renderStroke(context, action, scale);
+    for (const layerId of orderedLayerIds) {
+      for (const action of actionsRef.current) {
+        if (action.layerId !== layerId) continue;
+
+        if (isFillAction(action)) {
+          applyFillToCanvas(
+            context,
+            canvas,
+            action.x,
+            action.y,
+            action.color,
+            scale,
+            action.tolerance,
+          );
+        } else {
+          renderStroke(context, action, scale);
+        }
       }
     }
   };

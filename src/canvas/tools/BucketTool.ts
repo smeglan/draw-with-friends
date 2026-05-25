@@ -16,6 +16,7 @@ export class BucketTool implements ITool {
       y: point.y,
       color: ctx.brushColor,
       tolerance: ctx.bucketSensitivity,
+      layerId: ctx.activeLayerId,
     };
 
     ctx.actionsRef.current = [...ctx.actionsRef.current, fillAction];

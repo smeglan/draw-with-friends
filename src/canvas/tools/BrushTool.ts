@@ -26,6 +26,7 @@ export class BrushTool implements ITool {
       color: ctx.brushColor,
       size: ctx.brushSize,
       points: [point],
+      layerId: ctx.activeLayerId,
     };
     this.currentStroke = stroke;
     renderStrokeDot(context, point, stroke, ctx.scale);

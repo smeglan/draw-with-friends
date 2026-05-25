@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { PointerEvent } from "react";
 
 import { DRAWING_LIMITS, BUCKET_LIMITS, QUICK_COLORS } from "@/shared/constants/drawing";
 import { useElementSize } from "@/shared/hooks/useElementSize";
 import { clamp } from "@/shared/utils/clamp";
-import type { CanvasAction, DrawingTool } from "@/canvas/types";
-import { isFillAction } from "@/canvas/types";
+import type { CanvasAction, DrawingTool, Layer } from "@/canvas/types";
+import { isFillAction, createLayerId } from "@/canvas/types";
 import { ToolFactory } from "@/canvas/tools/ToolFactory";
 import type { ToolContext } from "@/canvas/tools/ITool";
 import { useFillLayer } from "@/canvas/hooks/useFillLayer";
@@ -24,20 +24,28 @@ export function useDrawingBoard() {
   const toolFactoryRef = useRef(new ToolFactory());
   const size = useElementSize(stageRef);
 
+  const [layers, setLayers] = useState<Layer[]>([
+    { id: createLayerId(), name: "Capa 1", visible: true },
+  ]);
+  const layersRef = useRef(layers);
+  layersRef.current = layers;
+
+  const [activeLayerId, setActiveLayerId] = useState(layers[0].id);
+  const activeLayerIdRef = useRef(activeLayerId);
+  activeLayerIdRef.current = activeLayerId;
+
   const {
     fillLayerRef,
-    fillLayerHistoryRef,
     initFillLayer,
-    processFillToLayer,
     clearFillLayer,
   } = useFillLayer(canvasRef, canvasScaleRef, actionsRef);
 
   const { redrawCanvas } = useCanvasRendering(
     canvasRef,
-    fillLayerRef,
     actionsRef,
     canvasBackgroundColorRef,
     canvasScaleRef,
+    layersRef,
   );
 
   const [brushSize, setBrushSize] = useState<number>(DRAWING_LIMITS.defaultBrushSize);
@@ -71,6 +79,7 @@ export function useDrawingBoard() {
     setActiveTool,
     updateCanvasBackgroundColor,
     redrawCanvas,
+    activeLayerId: activeLayerIdRef.current,
   });
 
   useEffect(() => {
@@ -118,7 +127,6 @@ export function useDrawingBoard() {
     if (actionsRef.current.length !== before) {
       const lastAction = actionsRef.current[actionsRef.current.length - 1];
       if (lastAction && isFillAction(lastAction)) {
-        processFillToLayer(lastAction);
         redrawCanvas();
       }
       setStrokesCount(actionsRef.current.length);
@@ -154,18 +162,8 @@ export function useDrawingBoard() {
 
   const handleUndo = () => {
     const lastAction = actionsRef.current[actionsRef.current.length - 1];
+    if (!lastAction) return;
     actionsRef.current = actionsRef.current.slice(0, -1);
-
-    if (lastAction && isFillAction(lastAction)) {
-      const prevState = fillLayerHistoryRef.current.pop();
-      if (prevState && fillLayerRef.current) {
-        const fillCtx = fillLayerRef.current.getContext("2d");
-        if (fillCtx) {
-          fillCtx.putImageData(prevState, 0, 0);
-        }
-      }
-    }
-
     setStrokesCount(actionsRef.current.length);
     redrawCanvas();
   };
@@ -227,6 +225,59 @@ export function useDrawingBoard() {
     }
   };
 
+  const addLayer = useCallback(() => {
+    const id = createLayerId();
+    const newLayer: Layer = { id, name: `Capa ${layersRef.current.length + 1}`, visible: true };
+    const newLayers = [...layersRef.current, newLayer];
+    setLayers(newLayers);
+    layersRef.current = newLayers;
+    setActiveLayerId(id);
+    activeLayerIdRef.current = id;
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const removeLayer = useCallback((id: string) => {
+    if (layersRef.current.length <= 1) return;
+    const newLayers = layersRef.current.filter((l) => l.id !== id);
+    actionsRef.current = actionsRef.current.filter((a) => a.layerId !== id);
+    setLayers(newLayers);
+    layersRef.current = newLayers;
+    if (activeLayerIdRef.current === id) {
+      const newId = newLayers.length > 0 ? newLayers[newLayers.length - 1].id : "";
+      setActiveLayerId(newId);
+      activeLayerIdRef.current = newId;
+    }
+    setStrokesCount(actionsRef.current.length);
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const toggleLayerVisibility = useCallback((id: string) => {
+    const newLayers = layersRef.current.map((l) =>
+      l.id === id ? { ...l, visible: !l.visible } : l,
+    );
+    setLayers(newLayers);
+    layersRef.current = newLayers;
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const reorderLayer = useCallback((id: string, direction: "up" | "down") => {
+    const idx = layersRef.current.findIndex((l) => l.id === id);
+    if (direction === "up" && idx >= layersRef.current.length - 1) return;
+    if (direction === "down" && idx <= 0) return;
+
+    const newLayers = [...layersRef.current];
+    const swapIdx = direction === "up" ? idx + 1 : idx - 1;
+    [newLayers[idx], newLayers[swapIdx]] = [newLayers[swapIdx], newLayers[idx]];
+    setLayers(newLayers);
+    layersRef.current = newLayers;
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const setActiveLayer = useCallback((id: string) => {
+    setActiveLayerId(id);
+    activeLayerIdRef.current = id;
+  }, []);
+
   return {
     stageRef,
     canvasRef,
@@ -250,5 +301,12 @@ export function useDrawingBoard() {
     handlePointerUp,
     handleUndo,
     handleClear,
+    layers,
+    activeLayerId,
+    addLayer,
+    removeLayer,
+    toggleLayerVisibility,
+    reorderLayer,
+    setActiveLayer,
   };
 }

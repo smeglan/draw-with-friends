@@ -13,6 +13,7 @@ export type ToolContext = {
   setActiveTool: (tool: DrawingTool) => void;
   updateCanvasBackgroundColor: (color: string) => void;
   redrawCanvas: () => void;
+  activeLayerId: string;
 };
 
 export interface ITool {

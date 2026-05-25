@@ -97,13 +97,14 @@ export class EraserTool extends BrushTool {
     for (let i = 0; i <= pointCount; i++) {
       if (i < pointCount && !erased[i]) {
         if (start === -1) start = i;
-      } else if (start !== -1) {
+      } else       if (start !== -1) {
         result.push({
           type: "stroke",
           tool: stroke.tool,
           color: stroke.color,
           size: stroke.size,
           points: stroke.points.slice(start, i),
+          layerId: stroke.layerId,
         });
         start = -1;
       }

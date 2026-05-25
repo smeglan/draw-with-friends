@@ -4,6 +4,7 @@ import { DrawingCanvas } from "@/canvas/components/canvas/DrawingCanvas";
 import { BrushSizeBar } from "@/canvas/components/molecules/BrushSizeBar";
 import { BucketSensitivityBar } from "@/canvas/components/molecules/BucketSensitivityBar";
 import { ToolSidebar } from "@/canvas/components/organisms/ToolSidebar";
+import { LayerPanel } from "@/canvas/components/organisms/LayerPanel";
 import { useDrawingBoard } from "@/canvas/hooks/useDrawingBoard";
 
 export default function DrawingBoard() {
@@ -28,6 +29,13 @@ export default function DrawingBoard() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    layers,
+    activeLayerId,
+    addLayer,
+    removeLayer,
+    toggleLayerVisibility,
+    reorderLayer,
+    setActiveLayer,
   } = drawingBoard;
 
   return (
@@ -41,7 +49,7 @@ export default function DrawingBoard() {
         <BrushSizeBar size={brushSize} onSizeChange={handleBrushSizeChange} />
       )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-[2rem] border border-white/10 bg-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         <ToolSidebar
           activeTool={activeTool}
           brushColor={brushColor}
@@ -64,6 +72,16 @@ export default function DrawingBoard() {
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+        />
+
+        <LayerPanel
+          layers={layers}
+          activeLayerId={activeLayerId}
+          onSetActiveLayer={setActiveLayer}
+          onToggleVisibility={toggleLayerVisibility}
+          onAddLayer={addLayer}
+          onRemoveLayer={removeLayer}
+          onReorderLayer={reorderLayer}
         />
       </div>
     </div>

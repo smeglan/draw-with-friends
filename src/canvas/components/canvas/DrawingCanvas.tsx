@@ -27,7 +27,7 @@ export function DrawingCanvas({
         onPointerLeave={onPointerUp}
       />
 
-      <div className="pointer-events-none absolute inset-x-4 bottom-4 flex flex-wrap gap-2 text-xs text-slate-300">
+      <div className="pointer-events-none absolute bottom-4 left-4 right-24 flex flex-wrap gap-2 text-xs text-slate-300">
         <span className="truncate rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
           Click y arrastra para dibujar
         </span>
