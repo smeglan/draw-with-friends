@@ -8,29 +8,40 @@ import { useElementSize } from "@/shared/hooks/useElementSize";
 import { clamp } from "@/shared/utils/clamp";
 import type { CanvasAction, DrawingTool } from "@/canvas/types";
 import { isFillAction } from "@/canvas/types";
-import { renderStroke } from "@/canvas/utils/renderStroke";
-import { applyFillToCanvas } from "@/canvas/utils/floodFill";
 import { ToolFactory } from "@/canvas/tools/ToolFactory";
 import type { ToolContext } from "@/canvas/tools/ITool";
+import { useFillLayer } from "@/canvas/hooks/useFillLayer";
+import { useCanvasRendering } from "@/canvas/hooks/useCanvasRendering";
 
 const INITIAL_BACKGROUND_COLOR = "#ffffff";
 
 export function useDrawingBoard() {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const actionsRef = useRef<CanvasAction[]>([]);
   const canvasScaleRef = useRef(1);
   const canvasBackgroundColorRef = useRef(INITIAL_BACKGROUND_COLOR);
+  const actionsRef = useRef<CanvasAction[]>([]);
   const toolFactoryRef = useRef(new ToolFactory());
-  const fillLayerRef = useRef<HTMLCanvasElement | null>(null);
-  const fillLayerHistoryRef = useRef<ImageData[]>([]);
   const size = useElementSize(stageRef);
-  const [brushSize, setBrushSize] = useState<number>(
-    DRAWING_LIMITS.defaultBrushSize,
+
+  const {
+    fillLayerRef,
+    fillLayerHistoryRef,
+    initFillLayer,
+    processFillToLayer,
+    clearFillLayer,
+  } = useFillLayer(canvasRef, canvasScaleRef, actionsRef);
+
+  const { redrawCanvas } = useCanvasRendering(
+    canvasRef,
+    fillLayerRef,
+    actionsRef,
+    canvasBackgroundColorRef,
+    canvasScaleRef,
   );
-  const [bucketSensitivity, setBucketSensitivity] = useState<number>(
-    BUCKET_LIMITS.defaultSensitivity,
-  );
+
+  const [brushSize, setBrushSize] = useState<number>(DRAWING_LIMITS.defaultBrushSize);
+  const [bucketSensitivity, setBucketSensitivity] = useState<number>(BUCKET_LIMITS.defaultSensitivity);
   const [brushColor, setBrushColor] = useState<string>(QUICK_COLORS[0]);
   const [activeTool, setActiveTool] = useState<DrawingTool>("brush");
   const [strokesCount, setStrokesCount] = useState(0);
@@ -40,9 +51,13 @@ export function useDrawingBoard() {
     ...QUICK_COLORS,
     ...Array(8).fill(null),
   ]);
-  const [canvasBackgroundColor, setCanvasBackgroundColor] = useState(
-    INITIAL_BACKGROUND_COLOR,
-  );
+  const [canvasBackgroundColor, setCanvasBackgroundColor] = useState(INITIAL_BACKGROUND_COLOR);
+
+  const updateCanvasBackgroundColor = (color: string) => {
+    canvasBackgroundColorRef.current = color;
+    setCanvasBackgroundColor(color);
+    redrawCanvas();
+  };
 
   const getToolContext = (): ToolContext => ({
     canvasRef,
@@ -57,193 +72,6 @@ export function useDrawingBoard() {
     updateCanvasBackgroundColor,
     redrawCanvas,
   });
-
-  const initFillLayer = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    if (
-      !fillLayerRef.current ||
-      fillLayerRef.current.width !== canvas.width ||
-      fillLayerRef.current.height !== canvas.height
-    ) {
-      fillLayerRef.current = document.createElement("canvas");
-      fillLayerRef.current.width = canvas.width;
-      fillLayerRef.current.height = canvas.height;
-    }
-  };
-
-  const processFillToLayer = (action: CanvasAction) => {
-    if (!isFillAction(action)) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas || !fillLayerRef.current) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const scale = canvasScaleRef.current;
-
-    const fillCtx = fillLayerRef.current.getContext("2d");
-    if (!fillCtx) return;
-
-    fillLayerHistoryRef.current.push(
-      fillCtx.getImageData(0, 0, w, h),
-    );
-
-    const tempCanvas = document.createElement("canvas");
-    tempCanvas.width = w;
-    tempCanvas.height = h;
-    const tempCtx = tempCanvas.getContext("2d");
-    if (!tempCtx) return;
-
-    tempCtx.drawImage(fillLayerRef.current, 0, 0);
-
-    for (const a of actionsRef.current) {
-      if (!isFillAction(a)) {
-        renderStroke(tempCtx, a, scale);
-      }
-    }
-
-    const beforeData = tempCtx.getImageData(0, 0, w, h);
-
-    applyFillToCanvas(
-      tempCtx,
-      tempCanvas,
-      action.x,
-      action.y,
-      action.color,
-      scale,
-      action.tolerance,
-    );
-
-    const afterData = tempCtx.getImageData(0, 0, w, h);
-
-    const fillPixels = new Uint8ClampedArray(w * h * 4);
-    for (let i = 0; i < beforeData.data.length; i += 4) {
-      const changed =
-        beforeData.data[i] !== afterData.data[i] ||
-        beforeData.data[i + 1] !== afterData.data[i + 1] ||
-        beforeData.data[i + 2] !== afterData.data[i + 2] ||
-        beforeData.data[i + 3] !== afterData.data[i + 3];
-      if (changed) {
-        fillPixels[i] = afterData.data[i];
-        fillPixels[i + 1] = afterData.data[i + 1];
-        fillPixels[i + 2] = afterData.data[i + 2];
-        fillPixels[i + 3] = afterData.data[i + 3];
-      }
-    }
-
-    const fillImageData = new ImageData(fillPixels, w, h);
-    const resultCanvas = document.createElement("canvas");
-    resultCanvas.width = w;
-    resultCanvas.height = h;
-    const resultCtx = resultCanvas.getContext("2d");
-    if (!resultCtx) return;
-    resultCtx.putImageData(fillImageData, 0, 0);
-
-    fillCtx.drawImage(resultCanvas, 0, 0);
-  };
-
-  const rebuildFillLayer = () => {
-    initFillLayer();
-    const fillCtx = fillLayerRef.current?.getContext("2d");
-    if (!fillCtx || !fillLayerRef.current) return;
-    fillCtx.clearRect(0, 0, fillLayerRef.current.width, fillLayerRef.current.height);
-
-    for (const action of actionsRef.current) {
-      if (isFillAction(action)) {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const w = canvas.width;
-        const h = canvas.height;
-        const scale = canvasScaleRef.current;
-
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = w;
-        tempCanvas.height = h;
-        const tempCtx = tempCanvas.getContext("2d");
-        if (!tempCtx) return;
-
-        tempCtx.drawImage(fillLayerRef.current!, 0, 0);
-
-        const actionIdx = actionsRef.current.indexOf(action);
-        for (let i = 0; i < actionIdx; i++) {
-          const a = actionsRef.current[i];
-          if (!isFillAction(a)) {
-            renderStroke(tempCtx, a, scale);
-          }
-        }
-
-        const beforeData = tempCtx.getImageData(0, 0, w, h);
-
-        applyFillToCanvas(
-          tempCtx,
-          tempCanvas,
-          action.x,
-          action.y,
-          action.color,
-          scale,
-          action.tolerance,
-        );
-
-        const afterData = tempCtx.getImageData(0, 0, w, h);
-
-        const fillPixels = new Uint8ClampedArray(w * h * 4);
-        for (let i = 0; i < beforeData.data.length; i += 4) {
-          const changed =
-            beforeData.data[i] !== afterData.data[i] ||
-            beforeData.data[i + 1] !== afterData.data[i + 1] ||
-            beforeData.data[i + 2] !== afterData.data[i + 2] ||
-            beforeData.data[i + 3] !== afterData.data[i + 3];
-          if (changed) {
-            fillPixels[i] = afterData.data[i];
-            fillPixels[i + 1] = afterData.data[i + 1];
-            fillPixels[i + 2] = afterData.data[i + 2];
-            fillPixels[i + 3] = afterData.data[i + 3];
-          }
-        }
-
-        const fillImageData = new ImageData(fillPixels, w, h);
-        const resultCanvas = document.createElement("canvas");
-        resultCanvas.width = w;
-        resultCanvas.height = h;
-        const resultCtx = resultCanvas.getContext("2d");
-        if (!resultCtx) return;
-        resultCtx.putImageData(fillImageData, 0, 0);
-
-        fillCtx.drawImage(resultCanvas, 0, 0);
-      }
-    }
-  };
-
-  const updateCanvasBackgroundColor = (color: string) => {
-    canvasBackgroundColorRef.current = color;
-    setCanvasBackgroundColor(color);
-    redrawCanvas();
-  };
-
-  const redrawCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    const scale = canvasScaleRef.current;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    context.fillStyle = canvasBackgroundColorRef.current;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (fillLayerRef.current) {
-      context.drawImage(fillLayerRef.current, 0, 0);
-    }
-
-    for (const action of actionsRef.current) {
-      if (!isFillAction(action)) {
-        renderStroke(context, action, scale);
-      }
-    }
-  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -344,18 +172,7 @@ export function useDrawingBoard() {
 
   const handleClear = () => {
     actionsRef.current = [];
-    fillLayerHistoryRef.current = [];
-    if (fillLayerRef.current) {
-      const fillCtx = fillLayerRef.current.getContext("2d");
-      if (fillCtx) {
-        fillCtx.clearRect(
-          0,
-          0,
-          fillLayerRef.current.width,
-          fillLayerRef.current.height,
-        );
-      }
-    }
+    clearFillLayer();
     updateCanvasBackgroundColor(INITIAL_BACKGROUND_COLOR);
     setStrokesCount(0);
   };

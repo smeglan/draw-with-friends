@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ColorWheel } from "@/canvas/components/atoms/ColorWheel";
 import { CustomColorSlots } from "@/canvas/components/molecules/CustomColorSlots";
 import { ToolButton } from "@/canvas/components/molecules/ToolButton";
@@ -31,18 +31,22 @@ export function ToolSidebar({
   onToggleBackground,
   onCustomColorClick,
 }: ToolSidebarProps) {
-  const [hexInput, setHexInput] = useState(brushColor);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setHexInput(brushColor);
+    if (inputRef.current) {
+      inputRef.current.value = brushColor;
+    }
   }, [brushColor]);
 
   const submitHex = () => {
-    const val = hexInput.trim();
+    const input = inputRef.current;
+    if (!input) return;
+    const val = input.value.trim();
     if (/^#[0-9a-fA-F]{6}$/.test(val) && val !== brushColor) {
       onWheelColorChange(val);
     } else {
-      setHexInput(brushColor);
+      input.value = brushColor;
     }
   };
 
@@ -72,13 +76,15 @@ export function ToolSidebar({
         </div>
 
         <input
+          ref={inputRef}
           type="text"
-          value={hexInput}
-          onChange={(e) => setHexInput(e.target.value)}
+          defaultValue={brushColor}
           onBlur={submitHex}
           onKeyDown={(e) => {
             if (e.key === "Enter") submitHex();
-            if (e.key === "Escape") setHexInput(brushColor);
+            if (e.key === "Escape") {
+              if (inputRef.current) inputRef.current.value = brushColor;
+            }
           }}
           className="w-full rounded border border-white/20 bg-white/5 px-2 py-1 text-center text-xs text-white placeholder-slate-500"
           placeholder="#000000"

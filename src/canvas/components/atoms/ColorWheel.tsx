@@ -26,9 +26,9 @@ function hslToHex(h: number, s: number, l: number): string {
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!m) return { h: 0, s: 0, l: 0 };
-  let r = parseInt(m[1], 16) / 255;
-  let g = parseInt(m[2], 16) / 255;
-  let b = parseInt(m[3], 16) / 255;
+  const r = parseInt(m[1], 16) / 255;
+  const g = parseInt(m[2], 16) / 255;
+  const b = parseInt(m[3], 16) / 255;
   const mx = Math.max(r, g, b);
   const mn = Math.min(r, g, b);
   const l = (mx + mn) / 2;
