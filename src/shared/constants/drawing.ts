@@ -1,3 +1,8 @@
+export const ZOOM_LIMITS = {
+  min: 0.1,
+  max: 4,
+} as const;
+
 export const DRAWING_LIMITS = {
   minBrushSize: 2,
   maxBrushSize: 40,

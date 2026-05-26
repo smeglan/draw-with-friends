@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Icon } from "@/shared/icons";
 import { ToolButton } from "@/canvas/components/molecules/ToolButton";
 import { ShapeMenu } from "@/canvas/components/organisms/ShapeMenu";
@@ -34,7 +34,8 @@ const SHAPE_SVG: Record<ShapeType, React.ReactNode> = {
 };
 
 export function ToolsSection({ activeTool, selectedShape, onToolSelect, onShapeSelect }: ToolsSectionProps) {
-  const shapeButtonRef = useRef<HTMLButtonElement>(null);
+  const [shapeButtonEl, setShapeButtonEl] = useState<HTMLButtonElement | null>(null);
+  const shapeButtonRef = useCallback((el: HTMLButtonElement | null) => setShapeButtonEl(el), []);
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
   return (
@@ -92,7 +93,7 @@ export function ToolsSection({ activeTool, selectedShape, onToolSelect, onShapeS
 
       <ShapeMenu
         open={shapeMenuOpen}
-        anchorEl={shapeButtonRef.current}
+        anchorEl={shapeButtonEl}
         selectedShape={selectedShape}
         onSelect={(shape) => {
           onShapeSelect(shape);

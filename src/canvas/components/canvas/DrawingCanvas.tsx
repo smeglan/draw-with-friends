@@ -1,6 +1,8 @@
 "use client";
 
+import { memo, useEffect, useRef } from "react";
 import type { PointerEventHandler, RefObject } from "react";
+import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import type { DrawingTool } from "@/canvas/types";
 
 type DrawingCanvasProps = {
@@ -13,9 +15,10 @@ type DrawingCanvasProps = {
   onPointerDown: PointerEventHandler<HTMLCanvasElement>;
   onPointerMove: PointerEventHandler<HTMLCanvasElement>;
   onPointerUp: PointerEventHandler<HTMLCanvasElement>;
+  onCanvasWheel: (event: WheelEvent) => void;
 };
 
-export function DrawingCanvas({
+function DrawingCanvasImpl({
   canvasAreaRef,
   canvasRef,
   canvasWidth,
@@ -25,9 +28,29 @@ export function DrawingCanvas({
   onPointerDown,
   onPointerMove,
   onPointerUp,
+  onCanvasWheel,
 }: DrawingCanvasProps) {
-  const scale = Math.max(0.25, Math.min(2, zoom));
+  const wheelHandlerRef = useRef(onCanvasWheel);
+
+  useEffect(() => {
+    wheelHandlerRef.current = onCanvasWheel;
+  });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handler = (event: WheelEvent) => {
+      wheelHandlerRef.current(event);
+    };
+
+    canvas.addEventListener("wheel", handler, { passive: false });
+    return () => canvas.removeEventListener("wheel", handler);
+  }, [canvasRef]);
+
+  const scale = Math.max(ZOOM_LIMITS.min, Math.min(ZOOM_LIMITS.max, zoom));
   const cursorClass = activeTool === "hand" ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair";
+
   return (
     <div
       ref={canvasAreaRef}
@@ -35,9 +58,10 @@ export function DrawingCanvas({
         "relative flex-1 overscroll-contain overflow-auto bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))]",
         cursorClass,
       ].join(" ")}
+      style={{ scrollbarGutter: "stable", touchAction: "none" } as React.CSSProperties}
     >
       <div
-        className="relative min-h-full min-w-full"
+        className="relative"
         style={{
           width: `${canvasWidth * scale}px`,
           height: `${canvasHeight * scale}px`,
@@ -55,3 +79,5 @@ export function DrawingCanvas({
     </div>
   );
 }
+
+export const DrawingCanvas = memo(DrawingCanvasImpl);
