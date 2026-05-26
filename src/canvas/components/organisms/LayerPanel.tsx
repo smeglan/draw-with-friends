@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Icon } from "@/shared/icons";
 import type { Layer } from "@/canvas/types";
 
 type LayerPanelProps = {
@@ -12,69 +13,6 @@ type LayerPanelProps = {
   onRemoveLayer: (id: string) => void;
   onReorderLayer: (id: string, direction: "up" | "down") => void;
 };
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function EyeOffIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  );
-}
-
-function LayersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    </svg>
-  );
-}
-
-function ChevronUpIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-      <polyline points="18 15 12 9 6 15" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
 
 export function LayerPanel({
   layers,
@@ -95,7 +33,7 @@ export function LayerPanel({
         title="Capas"
         className="absolute bottom-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-slate-300 shadow-lg backdrop-blur-md transition-all hover:bg-white/15 hover:text-white"
       >
-        <LayersIcon />
+        <Icon name="layers" />
       </button>
     );
   }
@@ -110,9 +48,7 @@ export function LayerPanel({
           title="Minimizar"
           className="flex h-5 w-5 items-center justify-center rounded-md text-slate-500 transition-colors hover:text-white"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3">
-            <polyline points="6 15 12 9 18 15" />
-          </svg>
+          <Icon name="chevronUp" className="h-3 w-3" />
         </button>
       </div>
 
@@ -140,7 +76,7 @@ export function LayerPanel({
               }`}
               title={layer.visible ? "Ocultar capa" : "Mostrar capa"}
             >
-              {layer.visible ? <EyeIcon /> : <EyeOffIcon />}
+              {layer.visible ? <Icon name="eye" /> : <Icon name="eyeOff" />}
             </button>
 
             <span className={`flex-1 truncate ${!layer.visible ? "italic text-slate-500" : ""}`}>
@@ -158,7 +94,7 @@ export function LayerPanel({
                   title="Subir capa"
                   className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-white"
                 >
-                  <ChevronUpIcon />
+                  <Icon name="chevronUp" />
                 </button>
                 <button
                   type="button"
@@ -169,7 +105,7 @@ export function LayerPanel({
                   title="Bajar capa"
                   className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-white"
                 >
-                  <ChevronDownIcon />
+                  <Icon name="chevronDown" />
                 </button>
               </div>
             )}
@@ -184,7 +120,7 @@ export function LayerPanel({
           title="Agregar capa"
           className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <PlusIcon />
+          <Icon name="plus" />
         </button>
         <button
           type="button"
@@ -193,7 +129,7 @@ export function LayerPanel({
           disabled={layers.length <= 1}
           className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
         >
-          <TrashIcon />
+          <Icon name="trash" />
         </button>
       </div>
     </div>

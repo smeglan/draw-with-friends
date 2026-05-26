@@ -1,14 +1,14 @@
 "use client";
 
 import type { CanvasAction, Layer } from "@/canvas/types";
-import { isFillAction } from "@/canvas/types";
+import { isFillAction, isShapeAction } from "@/canvas/types";
 import { renderStroke } from "@/canvas/utils/renderStroke";
+import { renderShapeOutline } from "@/canvas/utils/renderShape";
 import { applyFillToCanvas } from "@/canvas/utils/floodFill";
 
 export function useCanvasRendering(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   actionsRef: { current: CanvasAction[] },
-  canvasBackgroundColorRef: { current: string },
   canvasScaleRef: { current: number },
   layersRef: { current: Layer[] },
 ) {
@@ -22,7 +22,7 @@ export function useCanvasRendering(
     const scale = canvasScaleRef.current;
     context.clearRect(0, 0, canvas.width, canvas.height);
 
-    context.fillStyle = canvasBackgroundColorRef.current;
+    context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
     const orderedLayerIds = layersRef.current
@@ -43,6 +43,8 @@ export function useCanvasRendering(
             scale,
             action.tolerance,
           );
+        } else if (isShapeAction(action)) {
+          renderShapeOutline(context, action, scale);
         } else {
           renderStroke(context, action, scale);
         }

@@ -1,8 +1,4 @@
 import type { DrawingTool, Point, Stroke, StrokeTool } from "@/canvas/types";
-import {
-  renderStrokeDot,
-  renderStrokeSegment,
-} from "@/canvas/utils/renderStroke";
 import type { ITool, ToolContext } from "@/canvas/tools/ITool";
 
 export class BrushTool implements ITool {
@@ -13,10 +9,6 @@ export class BrushTool implements ITool {
   protected lastPoint: Point | null = null;
 
   onPointerDown(point: Point, ctx: ToolContext): void {
-    const canvas = ctx.canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
-
     this.isDrawing = true;
     this.lastPoint = point;
 
@@ -27,25 +19,44 @@ export class BrushTool implements ITool {
       size: ctx.brushSize,
       points: [point],
       layerId: ctx.activeLayerId,
+      opacity: ctx.brushOpacity,
     };
     this.currentStroke = stroke;
-    renderStrokeDot(context, point, stroke, ctx.scale);
+
+    ctx.renderPreviewStroke(stroke);
   }
 
   onPointerMove(point: Point, ctx: ToolContext): void {
-    const canvas = ctx.canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context || !this.isDrawing || !this.currentStroke || !this.lastPoint) return;
+    if (!this.isDrawing || !this.currentStroke || !this.lastPoint) return;
 
-    this.currentStroke.points.push(point);
-    renderStrokeSegment(context, this.lastPoint, point, this.currentStroke, ctx.scale);
-    this.lastPoint = point;
+    const threshold = 2;
+    const dx = point.x - this.lastPoint.x;
+    const dy = point.y - this.lastPoint.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return;
+
+    const steps = Math.max(1, Math.ceil(dist / threshold));
+    const start = this.lastPoint;
+    let nextPoint = start;
+
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      nextPoint = {
+        x: start.x + dx * t,
+        y: start.y + dy * t,
+      };
+      this.currentStroke.points.push(nextPoint);
+    }
+
+    this.lastPoint = nextPoint;
+    ctx.renderPreviewStroke(this.currentStroke);
   }
 
   onPointerUp(ctx: ToolContext): void {
     if (!this.isDrawing) return;
     if (this.currentStroke && this.currentStroke.points.length > 0) {
       ctx.actionsRef.current = [...ctx.actionsRef.current, this.currentStroke];
+      ctx.redrawCanvas();
     }
     this.isDrawing = false;
     this.currentStroke = null;

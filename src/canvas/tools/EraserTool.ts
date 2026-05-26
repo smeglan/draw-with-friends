@@ -1,6 +1,6 @@
 import { BrushTool } from "@/canvas/tools/BrushTool";
-import type { Point, DrawingTool, Stroke, StrokeTool, CanvasAction } from "@/canvas/types";
-import { isFillAction } from "@/canvas/types";
+import type { Point, DrawingTool, Stroke, StrokeTool, CanvasAction, ShapeAction } from "@/canvas/types";
+import { isFillAction, isShapeAction } from "@/canvas/types";
 import type { ToolContext } from "@/canvas/tools/ITool";
 
 export class EraserTool extends BrushTool {
@@ -41,6 +41,19 @@ export class EraserTool extends BrushTool {
     const remaining: CanvasAction[] = ctx.actionsRef.current.flatMap(
       (action): CanvasAction[] => {
         if (isFillAction(action)) return [action];
+        if (isShapeAction(action)) {
+          const shapeBounds = {
+            minX: Math.min(action.startX, action.endX),
+            minY: Math.min(action.startY, action.endY),
+            maxX: Math.max(action.startX, action.endX),
+            maxY: Math.max(action.startY, action.endY),
+          };
+          if (this.boundsOverlap(shapeBounds, { minX, minY, maxX, maxY })) {
+            changed = true;
+            return [];
+          }
+          return [action];
+        }
         if (action.tool === "eraser") return [action];
         const parts = this.cutStrokeInRect(action, minX, minY, maxX, maxY);
         if (parts.length !== 1 || parts[0] !== action) changed = true;
@@ -105,6 +118,7 @@ export class EraserTool extends BrushTool {
           size: stroke.size,
           points: stroke.points.slice(start, i),
           layerId: stroke.layerId,
+          opacity: stroke.opacity,
         });
         start = -1;
       }

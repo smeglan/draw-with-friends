@@ -2,6 +2,9 @@ export const DRAWING_LIMITS = {
   minBrushSize: 2,
   maxBrushSize: 40,
   defaultBrushSize: 10,
+  minOpacity: 0,
+  maxOpacity: 100,
+  defaultOpacity: 100,
 } as const;
 
 export const BUCKET_LIMITS = {

@@ -1,149 +1,120 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ColorWheel } from "@/canvas/components/atoms/ColorWheel";
-import { CustomColorSlots } from "@/canvas/components/molecules/CustomColorSlots";
-import { ToolButton } from "@/canvas/components/molecules/ToolButton";
-import type { DrawingTool } from "@/canvas/types";
+import { useState } from "react";
+import { ColorSection } from "@/canvas/components/molecules/ColorSection";
+import { PaletteSection } from "@/canvas/components/molecules/PaletteSection";
+import { ToolsSection } from "@/canvas/components/molecules/ToolsSection";
+import { Icon } from "@/shared/icons";
+import type { DrawingTool, SavedPalette, ShapeType } from "@/canvas/types";
 
 type ToolSidebarProps = {
   activeTool: DrawingTool;
   brushColor: string;
-  canvasBackgroundColor: string;
   customColors: (string | null)[];
   selectedSlotIndex: number;
+  selectedShape: ShapeType;
+  savedPalettes: SavedPalette[];
+  activePaletteId: string | null;
   onToolSelect: (tool: DrawingTool) => void;
   onColorSelect: (color: string) => void;
   onWheelColorChange: (color: string) => void;
-  onToggleBackground: () => void;
   onCustomColorClick: (index: number, replace?: boolean) => void;
+  onShapeSelect: (shape: ShapeType) => void;
+  onSavePalette: (name: string) => void;
+  onCreatePalette: (name: string) => void;
+  onSelectPalette: (paletteId: string) => void;
+  onDeletePalette: (paletteId: string) => void;
+  onExportPalette: (paletteId?: string) => void;
+  onImportPaletteJson: (file: File) => void;
+  isMobileOpen: boolean;
+  onCloseMobile: () => void;
 };
 
 export function ToolSidebar({
   activeTool,
   brushColor,
-  canvasBackgroundColor,
   customColors,
   selectedSlotIndex,
   onToolSelect,
   onColorSelect,
   onWheelColorChange,
-  onToggleBackground,
   onCustomColorClick,
+  selectedShape,
+  savedPalettes,
+  activePaletteId,
+  onShapeSelect,
+  onSavePalette,
+  onCreatePalette,
+  onSelectPalette,
+  onDeletePalette,
+  onExportPalette,
+  onImportPaletteJson,
+  isMobileOpen,
+  onCloseMobile,
 }: ToolSidebarProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.value = brushColor;
-    }
-  }, [brushColor]);
-
-  const submitHex = () => {
-    const input = inputRef.current;
-    if (!input) return;
-    const val = input.value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(val) && val !== brushColor) {
-      onWheelColorChange(val);
-    } else {
-      input.value = brushColor;
-    }
-  };
-
   return (
-    <aside className="flex h-full w-52 flex-col gap-3 border-r border-white/10 bg-black/20 p-3 backdrop-blur-md">
-      <div className="flex flex-1 flex-col items-center gap-2 overflow-y-auto rounded-2xl border border-white/10 bg-white/5 p-3">
-        <p className="w-full truncate text-[10px] uppercase tracking-[0.08em] text-slate-300">
-          Colores
-        </p>
-
-        <div className="flex h-10 w-full overflow-hidden rounded-lg border border-white/15">
-          <div className="flex-1" style={{ backgroundColor: brushColor }} />
-          <button
-            type="button"
-            className="w-10 border-l border-white/15 transition hover:scale-105"
-            style={{ backgroundColor: "#000000" }}
-            onClick={() => onColorSelect("#000000")}
-            aria-label="Negro"
-          />
-          <button
-            type="button"
-            className="w-10 border-l border-white/15 transition hover:scale-105"
-            style={{ backgroundColor: "#ffffff" }}
-            onClick={() => onColorSelect("#ffffff")}
-            aria-label="Blanco"
-          />
-        </div>
-
-        <input
-          ref={inputRef}
-          type="text"
-          defaultValue={brushColor}
-          onBlur={submitHex}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") submitHex();
-            if (e.key === "Escape") {
-              if (inputRef.current) inputRef.current.value = brushColor;
-            }
-          }}
-          className="w-full rounded border border-white/20 bg-white/5 px-2 py-1 text-center text-xs text-white placeholder-slate-500"
-          placeholder="#000000"
-        />
-
-        <ColorWheel selectedColor={brushColor} onColorChange={onWheelColorChange} />
-
-        <div className="w-full border-t border-white/10 pt-2">
-          <p className="mb-1.5 w-full truncate text-[10px] uppercase tracking-[0.08em] text-slate-400">
-            Paleta
-          </p>
-          <CustomColorSlots
-            colors={customColors}
-            selectedIndex={selectedSlotIndex}
-            onSlotClick={onCustomColorClick}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-2">
-        <p className="w-full truncate text-[10px] uppercase tracking-[0.08em] text-slate-300">
-          Herramientas
-        </p>
-        <div className="flex flex-col gap-2">
-          <ToolButton
-            tool="brush"
-            label="Pincel"
-            isActive={activeTool === "brush"}
-            onSelect={onToolSelect}
-          />
-          <ToolButton
-            tool="bucket"
-            label="Balde"
-            isActive={activeTool === "bucket"}
-            onSelect={onToolSelect}
-          />
-          <ToolButton
-            tool="eraser"
-            label="Borrador"
-            isActive={activeTool === "eraser"}
-            onSelect={onToolSelect}
-          />
-          <ToolButton
-            tool="eyedropper"
-            label="Cuenta gotas"
-            isActive={activeTool === "eyedropper"}
-            onSelect={onToolSelect}
-          />
-        </div>
-      </div>
-
+    <>
       <button
         type="button"
-        onClick={onToggleBackground}
-        className="rounded-2xl border border-white/10 bg-white/10 px-2 py-2 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-white/15"
-        title="Cambiar color del canvas"
+        onClick={onCloseMobile}
+        aria-label="Cerrar menu"
+        className={[
+          "fixed inset-0 z-30 bg-black/40 backdrop-blur-[1px] transition-opacity lg:hidden",
+          isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        ].join(" ")}
+      />
+
+      <aside
+        className={[
+          "fixed inset-y-0 left-0 z-40 flex w-[min(84vw,19rem)] flex-col gap-3 border-r border-white/10 bg-black/20 p-2 backdrop-blur-md transition-transform duration-300 sm:p-3 lg:sticky lg:top-0 lg:z-auto lg:h-[100dvh] lg:w-80 lg:overflow-y-auto xl:w-96 lg:translate-x-0",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        ].join(" ")}
       >
-        {canvasBackgroundColor === "#ffffff" ? "Blanco" : "Negro"}
-      </button>
-    </aside>
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 lg:hidden">
+          <div className="flex items-center gap-2">
+            <Icon name="menu" className="h-4 w-4 text-slate-300" />
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-300">Menu</span>
+          </div>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+            aria-label="Cerrar menu"
+            title="Cerrar menu"
+          >
+            <Icon name="chevronDown" className="h-3.5 w-3.5 rotate-180" />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <ColorSection
+            brushColor={brushColor}
+            onColorSelect={onColorSelect}
+            onWheelColorChange={onWheelColorChange}
+          />
+
+          <PaletteSection
+            customColors={customColors}
+            selectedSlotIndex={selectedSlotIndex}
+            onCustomColorClick={onCustomColorClick}
+            savedPalettes={savedPalettes}
+            activePaletteId={activePaletteId}
+            onSavePalette={onSavePalette}
+            onCreatePalette={onCreatePalette}
+            onSelectPalette={onSelectPalette}
+            onDeletePalette={onDeletePalette}
+            onExportPalette={onExportPalette}
+            onImportPaletteJson={onImportPaletteJson}
+          />
+
+          <ToolsSection
+            activeTool={activeTool}
+            selectedShape={selectedShape}
+            onToolSelect={onToolSelect}
+            onShapeSelect={onShapeSelect}
+          />
+        </div>
+      </aside>
+    </>
   );
 }

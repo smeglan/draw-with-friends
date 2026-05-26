@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { CanvasAction, DrawingTool, Point } from "@/canvas/types";
+import type { CanvasAction, DrawingTool, Point, Stroke } from "@/canvas/types";
 
 export type ToolContext = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -7,12 +7,13 @@ export type ToolContext = {
   scale: number;
   brushColor: string;
   brushSize: number;
+  brushOpacity: number;
   bucketSensitivity: number;
   actionsRef: { current: CanvasAction[] };
   setBrushColor: (color: string) => void;
   setActiveTool: (tool: DrawingTool) => void;
-  updateCanvasBackgroundColor: (color: string) => void;
   redrawCanvas: () => void;
+  renderPreviewStroke: (stroke: Stroke) => void;
   activeLayerId: string;
 };
 

@@ -4,6 +4,8 @@ import { BrushTool } from "@/canvas/tools/BrushTool";
 import { EraserTool } from "@/canvas/tools/EraserTool";
 import { BucketTool } from "@/canvas/tools/BucketTool";
 import { EyedropperTool } from "@/canvas/tools/EyedropperTool";
+import { ShapesTool } from "@/canvas/tools/ShapesTool";
+import { HandTool } from "@/canvas/tools/HandTool";
 
 export class ToolFactory {
   private cache = new Map<DrawingTool, ITool>();
@@ -27,6 +29,10 @@ export class ToolFactory {
         return new BucketTool();
       case "eyedropper":
         return new EyedropperTool();
+      case "shapes":
+        return new ShapesTool();
+      case "hand":
+        return new HandTool();
     }
   }
 }

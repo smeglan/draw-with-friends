@@ -1,39 +1,56 @@
 "use client";
 
 import type { PointerEventHandler, RefObject } from "react";
+import type { DrawingTool } from "@/canvas/types";
 
 type DrawingCanvasProps = {
+  canvasAreaRef: RefObject<HTMLDivElement | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  canvasWidth: number;
+  canvasHeight: number;
+  zoom: number;
+  activeTool: DrawingTool;
   onPointerDown: PointerEventHandler<HTMLCanvasElement>;
   onPointerMove: PointerEventHandler<HTMLCanvasElement>;
   onPointerUp: PointerEventHandler<HTMLCanvasElement>;
 };
 
 export function DrawingCanvas({
+  canvasAreaRef,
   canvasRef,
+  canvasWidth,
+  canvasHeight,
+  zoom,
+  activeTool,
   onPointerDown,
   onPointerMove,
   onPointerUp,
 }: DrawingCanvasProps) {
+  const scale = Math.max(0.25, Math.min(2, zoom));
+  const cursorClass = activeTool === "hand" ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair";
   return (
-    <div className="relative flex-1 bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))]">
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 h-full w-full touch-none"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onPointerLeave={onPointerUp}
-      />
-
-      <div className="pointer-events-none absolute bottom-4 left-4 right-24 flex flex-wrap gap-2 text-xs text-slate-300">
-        <span className="truncate rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
-          Click y arrastra para dibujar
-        </span>
-        <span className="truncate rounded-full border border-white/10 bg-black/30 px-3 py-1.5">
-          Ctrl/Cmd + Z para deshacer
-        </span>
+    <div
+      ref={canvasAreaRef}
+      className={[
+        "relative flex-1 overscroll-contain overflow-auto bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))]",
+        cursorClass,
+      ].join(" ")}
+    >
+      <div
+        className="relative min-h-full min-w-full"
+        style={{
+          width: `${canvasWidth * scale}px`,
+          height: `${canvasHeight * scale}px`,
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 h-full w-full touch-none"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        />
       </div>
     </div>
   );
