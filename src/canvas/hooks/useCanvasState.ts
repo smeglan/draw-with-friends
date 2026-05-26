@@ -14,6 +14,7 @@ type StateDeps = {
 export function useCanvasState({ actionsRef, layersRef }: StateDeps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasScaleRef = useRef(1);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [canvasSize, setCanvasSize] = useState<CanvasDimensions>({
     width: 1920,
     height: 1080,
@@ -37,10 +38,16 @@ export function useCanvasState({ actionsRef, layersRef }: StateDeps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const scale = window.devicePixelRatio || 1;
+    const scale = Math.min(window.devicePixelRatio || 1, 1.5);
     canvasScaleRef.current = scale;
     canvas.width = Math.floor(canvasSize.width * scale);
     canvas.height = Math.floor(canvasSize.height * scale);
+
+    const previewCanvas = previewCanvasRef.current;
+    if (previewCanvas) {
+      previewCanvas.width = canvas.width;
+      previewCanvas.height = canvas.height;
+    }
 
     initFillLayer();
     redrawCanvas();
@@ -48,6 +55,7 @@ export function useCanvasState({ actionsRef, layersRef }: StateDeps) {
 
   return {
     canvasRef,
+    previewCanvasRef,
     canvasScaleRef,
     canvasSize,
     canvasSizeRef,

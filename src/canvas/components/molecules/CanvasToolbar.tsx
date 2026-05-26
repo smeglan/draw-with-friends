@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Icon } from "@/shared/icons";
 import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import { BrushSizeBar } from "@/canvas/components/molecules/BrushSizeBar";
@@ -51,18 +51,15 @@ export function CanvasToolbar({
   onUndo,
   onRedo,
 }: CanvasToolbarProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const isFullscreen = useSyncExternalStore(
+    (cb) => {
+      document.addEventListener("fullscreenchange", cb);
+      return () => document.removeEventListener("fullscreenchange", cb);
+    },
+    () => Boolean(document.fullscreenElement),
+    () => false,
+  );
   const iconBtn = "flex h-12 w-12 items-center justify-center rounded-2xl border transition";
-
-  useEffect(() => {
-    setIsHydrated(true);
-
-    const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", handler);
-    handler();
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, []);
 
   const toggleFullscreen = async () => {
     const el = stageRef.current;
@@ -132,7 +129,7 @@ export function CanvasToolbar({
         <button
           type="button"
           onClick={onUndo}
-          disabled={isHydrated && strokesCount === 0}
+          suppressHydrationWarning disabled={strokesCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
           aria-label="Deshacer"
           title="Deshacer"
@@ -142,7 +139,7 @@ export function CanvasToolbar({
         <button
           type="button"
           onClick={onRedo}
-          disabled={isHydrated && redoCount === 0}
+          suppressHydrationWarning disabled={redoCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
           aria-label="Rehacer"
           title="Rehacer"

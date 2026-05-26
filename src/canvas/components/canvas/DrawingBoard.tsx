@@ -15,6 +15,7 @@ export default function DrawingBoard() {
     stageRef,
     canvasAreaRef,
     canvasRef,
+    previewCanvasRef,
     canvasSize,
     brushSize,
     brushOpacity,
@@ -117,6 +118,7 @@ export default function DrawingBoard() {
         <DrawingCanvas
           canvasAreaRef={canvasAreaRef}
           canvasRef={canvasRef}
+          previewCanvasRef={previewCanvasRef}
           canvasWidth={canvasSize.width}
           canvasHeight={canvasSize.height}
           zoom={canvasZoom}

@@ -16,6 +16,7 @@ import { useCanvasZoom } from "./useCanvasZoom";
 import { useCanvasPan } from "./useCanvasPan";
 import { useCanvasLayers } from "./useCanvasLayers";
 import { useCanvasPalettes } from "./useCanvasPalettes";
+import { consolidateActions } from "@/canvas/utils/consolidate";
 
 function scaleCanvasActions(
   actions: CanvasAction[],
@@ -128,7 +129,7 @@ export function useDrawingBoard() {
     canvasSizeRef.current = nextSize;
   }, [canvasSizeRef, actionsRef, redoActionsRef, historySetStrokesCount, historySetRedoCount, setCanvasSize]);
 
-  const getPointFromEvent = (event: PointerEvent<HTMLCanvasElement>) => {
+  const getPointFromEvent = (event: { clientX: number; clientY: number }) => {
     const s = stateRef.current;
     const canvas = s.canvasRef.current;
     if (!canvas) return null;
@@ -148,6 +149,7 @@ export function useDrawingBoard() {
     const h = historyRef.current;
     return {
       canvasRef: s.canvasRef,
+      previewCanvasRef: s.previewCanvasRef,
       fillLayerRef: s.fillLayerRef,
       scale: s.canvasScaleRef.current,
       brushColor: t.brushColor,
@@ -176,7 +178,24 @@ export function useDrawingBoard() {
     };
   };
 
+  const rAFRef = useRef<number | null>(null);
+  const latestEventDataRef = useRef<{ clientX: number; clientY: number; pointerId: number } | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rAFRef.current !== null) {
+        cancelAnimationFrame(rAFRef.current);
+      }
+    };
+  }, []);
+
   const handlePointerDown = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    if (rAFRef.current !== null) {
+      cancelAnimationFrame(rAFRef.current);
+      rAFRef.current = null;
+    }
+    latestEventDataRef.current = null;
+
     const p = panRef.current;
     const t = toolsRef.current;
     const s = stateRef.current;
@@ -213,6 +232,13 @@ export function useDrawingBoard() {
       if (h.actionsRef.current.length > before) {
         h.clearRedoStack();
       }
+      h.actionsRef.current = consolidateActions(
+        h.actionsRef.current,
+        layersRef.current,
+        s.canvasRef.current?.width || 0,
+        s.canvasRef.current?.height || 0,
+        s.canvasScaleRef.current
+      );
       const lastAction = h.actionsRef.current[h.actionsRef.current.length - 1];
       if (lastAction && isFillAction(lastAction)) {
         s.redrawCanvas();
@@ -222,31 +248,55 @@ export function useDrawingBoard() {
   }, []);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
-    const p = panRef.current;
-    const t = toolsRef.current;
-    const h = historyRef.current;
+    latestEventDataRef.current = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      pointerId: event.pointerId,
+    };
 
-    if (p.isPanningRef.current && p.panStateRef.current.pointerId === event.pointerId) {
-      p.updatePan(event);
-      return;
-    }
+    if (rAFRef.current !== null) return;
 
-    const point = getPointFromEvent(event);
-    if (!point) return;
+    rAFRef.current = requestAnimationFrame(() => {
+      rAFRef.current = null;
+      const data = latestEventDataRef.current;
+      if (!data) return;
 
-    const before = h.actionsRef.current.length;
-    const tool = t.toolFactoryRef.current.getTool(t.activeTool);
-    tool.onPointerMove(point, getToolContext());
+      const p = panRef.current;
+      const t = toolsRef.current;
+      const h = historyRef.current;
 
-    if (h.actionsRef.current.length !== before) {
-      if (h.actionsRef.current.length > before) {
-        h.clearRedoStack();
+      if (p.isPanningRef.current && p.panStateRef.current.pointerId === data.pointerId) {
+        p.updatePan({
+          clientX: data.clientX,
+          clientY: data.clientY,
+          preventDefault: () => {},
+        } as any);
+        return;
       }
-      h.setStrokesCount(h.actionsRef.current.length);
-    }
+
+      const point = getPointFromEvent(data);
+      if (!point) return;
+
+      const before = h.actionsRef.current.length;
+      const tool = t.toolFactoryRef.current.getTool(t.activeTool);
+      tool.onPointerMove(point, getToolContext());
+
+      if (h.actionsRef.current.length !== before) {
+        if (h.actionsRef.current.length > before) {
+          h.clearRedoStack();
+        }
+        h.setStrokesCount(h.actionsRef.current.length);
+      }
+    });
   }, []);
 
   const handlePointerUp = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    if (rAFRef.current !== null) {
+      cancelAnimationFrame(rAFRef.current);
+      rAFRef.current = null;
+    }
+    latestEventDataRef.current = null;
+
     const p = panRef.current;
     const t = toolsRef.current;
     const h = historyRef.current;
@@ -268,6 +318,14 @@ export function useDrawingBoard() {
       if (h.actionsRef.current.length > before) {
         h.clearRedoStack();
       }
+      const s = stateRef.current;
+      h.actionsRef.current = consolidateActions(
+        h.actionsRef.current,
+        layersRef.current,
+        s.canvasRef.current?.width || 0,
+        s.canvasRef.current?.height || 0,
+        s.canvasScaleRef.current
+      );
       h.setStrokesCount(h.actionsRef.current.length);
     }
   }, []);
@@ -276,6 +334,7 @@ export function useDrawingBoard() {
     stageRef,
     canvasAreaRef,
     canvasRef: state.canvasRef,
+    previewCanvasRef: state.previewCanvasRef,
     canvasAreaSize,
     canvasSize: state.canvasSize,
     handleCanvasWheel: zoom.handleCanvasWheel,

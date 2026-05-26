@@ -63,7 +63,13 @@ export type SavedPalette = {
   updatedAt: string;
 };
 
-export type CanvasAction = Stroke | FillAction | ShapeAction;
+export type RasterAction = {
+  type: "raster";
+  imageData: ImageData;
+  layerId: string;
+};
+
+export type CanvasAction = Stroke | FillAction | ShapeAction | RasterAction;
 
 export function isFillAction(action: CanvasAction): action is FillAction {
   return action.type === "fill";
@@ -71,6 +77,10 @@ export function isFillAction(action: CanvasAction): action is FillAction {
 
 export function isShapeAction(action: CanvasAction): action is ShapeAction {
   return action.type === "shape";
+}
+
+export function isRasterAction(action: CanvasAction): action is RasterAction {
+  return action.type === "raster";
 }
 
 export function createLayerId(): string {

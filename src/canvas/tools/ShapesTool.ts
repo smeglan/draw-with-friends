@@ -24,12 +24,13 @@ export class ShapesTool implements ITool {
 
     this.endPoint = point;
 
-    const canvas = ctx.canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const previewCanvas = ctx.previewCanvasRef?.current;
+    if (!previewCanvas) return;
+    const previewCtx = previewCanvas.getContext("2d");
+    if (!previewCtx) return;
 
-    ctx.redrawCanvas();
+    // Clear the preview canvas
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
     const preview: ShapeAction = {
       type: "shape",
@@ -44,7 +45,7 @@ export class ShapesTool implements ITool {
       layerId: ctx.activeLayerId,
     };
 
-    renderShapeOutline(context, preview, ctx.scale);
+    renderShapeOutline(previewCtx, preview, ctx.scale);
   }
 
   onPointerUp(ctx: ToolContext): void {
@@ -67,6 +68,13 @@ export class ShapesTool implements ITool {
       opacity: ctx.brushOpacity,
       layerId: ctx.activeLayerId,
     };
+
+    // Clear the preview canvas
+    const previewCanvas = ctx.previewCanvasRef?.current;
+    if (previewCanvas) {
+      const previewCtx = previewCanvas.getContext("2d");
+      previewCtx?.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    }
 
     ctx.actionsRef.current = [...ctx.actionsRef.current, action];
     ctx.redrawCanvas();

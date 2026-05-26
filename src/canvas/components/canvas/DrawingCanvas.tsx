@@ -8,6 +8,7 @@ import type { DrawingTool } from "@/canvas/types";
 type DrawingCanvasProps = {
   canvasAreaRef: RefObject<HTMLDivElement | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  previewCanvasRef: RefObject<HTMLCanvasElement | null>;
   canvasWidth: number;
   canvasHeight: number;
   zoom: number;
@@ -21,6 +22,7 @@ type DrawingCanvasProps = {
 function DrawingCanvasImpl({
   canvasAreaRef,
   canvasRef,
+  previewCanvasRef,
   canvasWidth,
   canvasHeight,
   zoom,
@@ -74,6 +76,10 @@ function DrawingCanvasImpl({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
+        />
+        <canvas
+          ref={previewCanvasRef}
+          className="pointer-events-none absolute inset-0 h-full w-full"
         />
       </div>
     </div>

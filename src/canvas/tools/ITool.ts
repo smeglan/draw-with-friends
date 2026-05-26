@@ -3,6 +3,7 @@ import type { CanvasAction, DrawingTool, Point, Stroke } from "@/canvas/types";
 
 export type ToolContext = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  previewCanvasRef?: RefObject<HTMLCanvasElement | null>;
   fillLayerRef: RefObject<HTMLCanvasElement | null>;
   scale: number;
   brushColor: string;
