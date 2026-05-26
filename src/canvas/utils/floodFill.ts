@@ -22,6 +22,24 @@ function colorsMatch(
   );
 }
 
+export function isUniformImageData(
+  imageData: ImageData,
+  targetColor: [number, number, number, number],
+  tolerance: number,
+): boolean {
+  const { data } = imageData;
+  const [rT, gT, bT, aT] = targetColor;
+  for (let i = 0; i < data.length; i += 4) {
+    if (
+      Math.abs(data[i] - rT) > tolerance ||
+      Math.abs(data[i + 1] - gT) > tolerance ||
+      Math.abs(data[i + 2] - bT) > tolerance ||
+      Math.abs(data[i + 3] - aT) > tolerance
+    ) return false;
+  }
+  return true;
+}
+
 export function floodFill(
   imageData: ImageData,
   startX: number,
@@ -41,35 +59,104 @@ export function floodFill(
 
   if (colorsMatch(targetColor, fillColor, 0)) return;
 
-  const stack: [number, number][] = [[startX, startY]];
   const visited = new Uint8Array(width * height);
+  const stack: [number, number][] = [[startX, startY]];
+
+  const matchesAt = (x: number, y: number) => {
+    const idx = (y * width + x) * 4;
+    return colorsMatch(
+      [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]],
+      targetColor,
+      tolerance,
+    );
+  };
+
+  const paintAt = (x: number, y: number) => {
+    const idx = (y * width + x) * 4;
+    data[idx] = fillColor[0];
+    data[idx + 1] = fillColor[1];
+    data[idx + 2] = fillColor[2];
+    data[idx + 3] = fillColor[3];
+    visited[y * width + x] = 1;
+  };
 
   while (stack.length > 0) {
-    const [x, y] = stack.pop()!;
-    const idx = y * width + x;
+    const [seedX, seedY] = stack.pop()!;
+    let xLeft = seedX;
+    let xRight = seedX;
 
-    if (visited[idx]) continue;
-    visited[idx] = 1;
+    while (xLeft - 1 >= 0 && !visited[seedY * width + (xLeft - 1)] && matchesAt(xLeft - 1, seedY)) {
+      xLeft--;
+    }
 
-    const pi = idx * 4;
-    if (
-      !colorsMatch(
-        [data[pi], data[pi + 1], data[pi + 2], data[pi + 3]],
-        targetColor,
-        tolerance,
-      )
-    ) continue;
+    while (xRight + 1 < width && !visited[seedY * width + (xRight + 1)] && matchesAt(xRight + 1, seedY)) {
+      xRight++;
+    }
 
-    data[pi] = fillColor[0];
-    data[pi + 1] = fillColor[1];
-    data[pi + 2] = fillColor[2];
-    data[pi + 3] = fillColor[3];
+    for (let x = xLeft; x <= xRight; x++) {
+      if (visited[seedY * width + x]) continue;
+      paintAt(x, seedY);
+    }
 
-    if (x > 0) stack.push([x - 1, y]);
-    if (x < width - 1) stack.push([x + 1, y]);
-    if (y > 0) stack.push([x, y - 1]);
-    if (y < height - 1) stack.push([x, y + 1]);
+    for (const nextY of [seedY - 1, seedY + 1]) {
+      if (nextY < 0 || nextY >= height) continue;
+
+      let x = xLeft;
+      while (x <= xRight) {
+        while (x <= xRight && (visited[nextY * width + x] || !matchesAt(x, nextY))) {
+          x++;
+        }
+
+        if (x > xRight) break;
+
+        stack.push([x, nextY]);
+
+        while (x <= xRight && !visited[nextY * width + x] && matchesAt(x, nextY)) {
+          x++;
+        }
+      }
+    }
   }
+}
+
+export function getTargetColor(
+  imageData: ImageData,
+  px: number,
+  py: number,
+  canvasWidth: number,
+): [number, number, number, number] | null {
+  const idx = (py * canvasWidth + px) * 4;
+  if (idx < 0 || idx + 3 >= imageData.data.length) return null;
+  return [
+    imageData.data[idx],
+    imageData.data[idx + 1],
+    imageData.data[idx + 2],
+    imageData.data[idx + 3],
+  ];
+}
+
+export function applyFillToImageData(
+  imageData: ImageData,
+  canvasWidth: number,
+  canvasHeight: number,
+  x: number,
+  y: number,
+  fillHex: string,
+  scale: number,
+  tolerance = 25,
+): void {
+  const px = Math.round(x * scale);
+  const py = Math.round(y * scale);
+
+  if (px < 0 || px >= canvasWidth || py < 0 || py >= canvasHeight) return;
+
+  const targetColor = getTargetColor(imageData, px, py, canvasWidth);
+  if (!targetColor) return;
+
+  const fillColor = hexToRgba(fillHex);
+  if (colorsMatch(targetColor, fillColor, 0)) return;
+
+  floodFill(imageData, px, py, targetColor, fillColor, tolerance);
 }
 
 export function applyFillToCanvas(
@@ -81,24 +168,7 @@ export function applyFillToCanvas(
   scale: number,
   tolerance = 25,
 ): void {
-  const px = Math.round(x * scale);
-  const py = Math.round(y * scale);
-
-  if (px < 0 || px >= canvas.width || py < 0 || py >= canvas.height) return;
-
   const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  const targetIdx = (py * canvas.width + px) * 4;
-  const targetColor: [number, number, number, number] = [
-    imageData.data[targetIdx],
-    imageData.data[targetIdx + 1],
-    imageData.data[targetIdx + 2],
-    imageData.data[targetIdx + 3],
-  ];
-
-  const fillColor = hexToRgba(fillHex);
-
-  if (colorsMatch(targetColor, fillColor, 0)) return;
-
-  floodFill(imageData, px, py, targetColor, fillColor, tolerance);
+  applyFillToImageData(imageData, canvas.width, canvas.height, x, y, fillHex, scale, tolerance);
   context.putImageData(imageData, 0, 0);
 }

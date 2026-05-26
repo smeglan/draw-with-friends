@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
-import type { CanvasAction, CanvasDimensions, Layer, Stroke } from "@/canvas/types";
+import type { CanvasAction, CanvasDimensions, Layer } from "@/canvas/types";
 import { useFillLayer } from "@/canvas/hooks/useFillLayer";
 import { useCanvasRendering } from "@/canvas/hooks/useCanvasRendering";
-import { renderStroke } from "@/canvas/utils/renderStroke";
 
 type StateDeps = {
   actionsRef: { current: CanvasAction[] };
@@ -34,15 +33,6 @@ export function useCanvasState({ actionsRef, layersRef }: StateDeps) {
     layersRef,
   );
 
-  const renderPreviewStroke = useCallback((stroke: Stroke) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-    redrawCanvas();
-    renderStroke(context, stroke, canvasScaleRef.current);
-  }, [redrawCanvas]);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -65,7 +55,6 @@ export function useCanvasState({ actionsRef, layersRef }: StateDeps) {
     initFillLayer,
     clearFillLayer,
     redrawCanvas,
-    renderPreviewStroke,
     setCanvasSize,
   };
 }

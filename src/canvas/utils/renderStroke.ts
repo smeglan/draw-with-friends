@@ -48,9 +48,11 @@ export function renderStrokeSegment(
   ctx: CanvasRenderingContext2D,
   from: Point,
   to: Point,
-  stroke: Pick<Stroke, "tool" | "color" | "size">,
+  stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">,
   canvasScale: number,
 ) {
+  ctx.save();
+  ctx.globalAlpha = (stroke.opacity ?? 100) / 100;
   ctx.globalCompositeOperation =
     stroke.tool === "eraser" ? "destination-out" : "source-over";
   ctx.strokeStyle = stroke.color;
@@ -61,15 +63,17 @@ export function renderStrokeSegment(
   ctx.moveTo(from.x * canvasScale, from.y * canvasScale);
   ctx.lineTo(to.x * canvasScale, to.y * canvasScale);
   ctx.stroke();
-  ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
 }
 
 export function renderStrokeDot(
   ctx: CanvasRenderingContext2D,
   point: Point,
-  stroke: Pick<Stroke, "tool" | "color" | "size">,
+  stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">,
   canvasScale: number,
 ) {
+  ctx.save();
+  ctx.globalAlpha = (stroke.opacity ?? 100) / 100;
   ctx.globalCompositeOperation =
     stroke.tool === "eraser" ? "destination-out" : "source-over";
   ctx.fillStyle = stroke.color;
@@ -82,5 +86,5 @@ export function renderStrokeDot(
     Math.PI * 2,
   );
   ctx.fill();
-  ctx.globalCompositeOperation = "source-over";
+  ctx.restore();
 }

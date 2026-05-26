@@ -13,7 +13,8 @@ export type ToolContext = {
   setBrushColor: (color: string) => void;
   setActiveTool: (tool: DrawingTool) => void;
   redrawCanvas: () => void;
-  renderPreviewStroke: (stroke: Stroke) => void;
+  renderStrokeSegment: (from: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => void;
+  renderStrokeDot: (point: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => void;
   activeLayerId: string;
 };
 

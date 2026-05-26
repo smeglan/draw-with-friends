@@ -1,14 +1,11 @@
 import type { Point, FillAction, DrawingTool } from "@/canvas/types";
 import type { ITool, ToolContext } from "@/canvas/tools/ITool";
-import { applyFillToCanvas } from "@/canvas/utils/floodFill";
 
 export class BucketTool implements ITool {
   readonly id: DrawingTool = "bucket";
 
   onPointerDown(point: Point, ctx: ToolContext): void {
-    const canvas = ctx.canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
+    if (!ctx.canvasRef.current) return;
 
     const fillAction: FillAction = {
       type: "fill",

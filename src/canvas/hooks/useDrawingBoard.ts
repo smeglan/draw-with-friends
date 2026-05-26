@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import type { PointerEvent } from "react";
 
 import { useElementSize } from "@/shared/hooks/useElementSize";
-import type { CanvasAction, CanvasDimensions, Layer } from "@/canvas/types";
+import type { CanvasAction, CanvasDimensions, Layer, Point, Stroke } from "@/canvas/types";
 import { createLayerId, isFillAction } from "@/canvas/types";
 import type { ToolContext } from "@/canvas/tools/ITool";
+import { renderStrokeSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
 
 import { useCanvasState } from "./useCanvasState";
 import { useCanvasTools } from "./useCanvasTools";
@@ -157,7 +158,20 @@ export function useDrawingBoard() {
       setBrushColor: t.setBrushColor,
       setActiveTool: t.setActiveTool,
       redrawCanvas: s.redrawCanvas,
-      renderPreviewStroke: s.renderPreviewStroke,
+      renderStrokeSegment: (from: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
+        const canvas = s.canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        renderStrokeSegment(ctx, from, to, stroke, s.canvasScaleRef.current);
+      },
+      renderStrokeDot: (point: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
+        const canvas = s.canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        renderStrokeDot(ctx, point, stroke, s.canvasScaleRef.current);
+      },
       activeLayerId: activeLayerIdRef.current,
     };
   };

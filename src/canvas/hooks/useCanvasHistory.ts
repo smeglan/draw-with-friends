@@ -24,8 +24,14 @@ export function useCanvasHistory({
     setRedoCount(0);
   }, [redoActionsRef]);
 
+  const MAX_UNDO = 8;
+
   const handleUndo = useCallback(() => {
-    const lastAction = actionsRef.current[actionsRef.current.length - 1];
+    const minUndoIndex = Math.max(0, actionsRef.current.length - MAX_UNDO);
+    const lastIndex = actionsRef.current.length - 1;
+    if (lastIndex < minUndoIndex) return;
+
+    const lastAction = actionsRef.current[lastIndex];
     if (!lastAction) return;
     actionsRef.current = actionsRef.current.slice(0, -1);
     redoActionsRef.current = [...redoActionsRef.current, lastAction];

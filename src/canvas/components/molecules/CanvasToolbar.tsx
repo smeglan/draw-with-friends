@@ -52,9 +52,12 @@ export function CanvasToolbar({
   onRedo,
 }: CanvasToolbarProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const iconBtn = "flex h-12 w-12 items-center justify-center rounded-2xl border transition";
 
   useEffect(() => {
+    setIsHydrated(true);
+
     const handler = () => setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handler);
     handler();
@@ -129,7 +132,7 @@ export function CanvasToolbar({
         <button
           type="button"
           onClick={onUndo}
-          disabled={strokesCount === 0}
+          disabled={isHydrated && strokesCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
           aria-label="Deshacer"
           title="Deshacer"
@@ -139,7 +142,7 @@ export function CanvasToolbar({
         <button
           type="button"
           onClick={onRedo}
-          disabled={redoCount === 0}
+          disabled={isHydrated && redoCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
           aria-label="Rehacer"
           title="Rehacer"

@@ -23,7 +23,7 @@ export class BrushTool implements ITool {
     };
     this.currentStroke = stroke;
 
-    ctx.renderPreviewStroke(stroke);
+    ctx.renderStrokeDot(point, stroke);
   }
 
   onPointerMove(point: Point, ctx: ToolContext): void {
@@ -37,19 +37,20 @@ export class BrushTool implements ITool {
 
     const steps = Math.max(1, Math.ceil(dist / threshold));
     const start = this.lastPoint;
-    let nextPoint = start;
+    let prev: Point = start;
 
     for (let i = 1; i <= steps; i++) {
       const t = i / steps;
-      nextPoint = {
+      const next: Point = {
         x: start.x + dx * t,
         y: start.y + dy * t,
       };
-      this.currentStroke.points.push(nextPoint);
+      this.currentStroke.points.push(next);
+      ctx.renderStrokeSegment(prev, next, this.currentStroke);
+      prev = next;
     }
 
-    this.lastPoint = nextPoint;
-    ctx.renderPreviewStroke(this.currentStroke);
+    this.lastPoint = prev;
   }
 
   onPointerUp(ctx: ToolContext): void {
