@@ -31,7 +31,7 @@ export function LayerPanel({
         type="button"
         onClick={() => setIsOpen(true)}
         title="Capas"
-        className="absolute bottom-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-slate-300 shadow-lg backdrop-blur-md transition-all hover:bg-white/15 hover:text-white"
+        className="fixed bottom-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-slate-300 shadow-lg backdrop-blur-md transition-all hover:bg-white/15 hover:text-white"
       >
         <Icon name="layers" />
       </button>
@@ -39,7 +39,7 @@ export function LayerPanel({
   }
 
   return (
-    <div className="absolute bottom-3 right-3 z-20 flex w-48 flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/70 shadow-xl backdrop-blur-xl">
+    <div className="fixed bottom-3 right-3 z-50 flex w-48 flex-col overflow-hidden rounded-2xl border border-white/10 bg-black/70 shadow-xl backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
         <span className="text-xs font-medium text-slate-300">Capas</span>
         <button
