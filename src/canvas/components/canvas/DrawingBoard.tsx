@@ -14,6 +14,7 @@ export default function DrawingBoard() {
   const {
     stageRef,
     canvasAreaRef,
+    innerContentRef,
     canvasRef,
     previewCanvasRef,
     canvasSize,
@@ -119,6 +120,7 @@ export default function DrawingBoard() {
           canvasAreaRef={canvasAreaRef}
           canvasRef={canvasRef}
           previewCanvasRef={previewCanvasRef}
+          innerContentRef={innerContentRef}
           canvasWidth={canvasSize.width}
           canvasHeight={canvasSize.height}
           zoom={canvasZoom}

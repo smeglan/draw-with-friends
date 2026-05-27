@@ -9,6 +9,7 @@ type DrawingCanvasProps = {
   canvasAreaRef: RefObject<HTMLDivElement | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
   previewCanvasRef: RefObject<HTMLCanvasElement | null>;
+  innerContentRef: RefObject<HTMLDivElement | null>;
   canvasWidth: number;
   canvasHeight: number;
   zoom: number;
@@ -23,6 +24,7 @@ function DrawingCanvasImpl({
   canvasAreaRef,
   canvasRef,
   previewCanvasRef,
+  innerContentRef,
   canvasWidth,
   canvasHeight,
   zoom,
@@ -57,12 +59,13 @@ function DrawingCanvasImpl({
     <div
       ref={canvasAreaRef}
       className={[
-        "relative flex-1 overscroll-contain overflow-auto bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))]",
+        "relative flex-1 overflow-hidden bg-[linear-gradient(135deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))]",
         cursorClass,
       ].join(" ")}
-      style={{ scrollbarGutter: "stable", touchAction: "none" } as React.CSSProperties}
+      style={{ touchAction: "none" } as React.CSSProperties}
     >
       <div
+        ref={innerContentRef}
         className="relative"
         style={{
           width: `${canvasWidth * scale}px`,

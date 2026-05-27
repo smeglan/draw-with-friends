@@ -57,6 +57,7 @@ const currentStrokePointsRef = { current: [] as Point[] };
 export function useDrawingBoard() {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasAreaRef = useRef<HTMLDivElement>(null);
+  const innerContentRef = useRef<HTMLDivElement>(null);
   const canvasAreaSize = useElementSize(canvasAreaRef);
 
   const actionsRef = useRef<CanvasAction[]>([]);
@@ -89,15 +90,17 @@ export function useDrawingBoard() {
 
   const tools = useCanvasTools();
 
+  const pan = useCanvasPan({
+    contentRef: innerContentRef,
+    setActiveTool: tools.setActiveTool,
+  });
+
   const zoom = useCanvasZoom({
     canvasAreaRef,
     canvasAreaSize,
     canvasSizeRef: state.canvasSizeRef,
-  });
-
-  const pan = useCanvasPan({
-    canvasAreaRef,
-    setActiveTool: tools.setActiveTool,
+    contentRef: innerContentRef,
+    panOffsetRef: pan.panOffsetRef,
   });
 
   const palettes = useCanvasPalettes({
@@ -400,6 +403,7 @@ export function useDrawingBoard() {
   return {
     stageRef,
     canvasAreaRef,
+    innerContentRef,
     canvasRef: state.canvasRef,
     previewCanvasRef: state.previewCanvasRef,
     canvasAreaSize,

@@ -5,26 +5,24 @@ import type { PointerEvent, RefObject } from "react";
 import type { DrawingTool } from "@/canvas/types";
 
 type PanDeps = {
-  canvasAreaRef: RefObject<HTMLDivElement | null>;
+  contentRef: RefObject<HTMLDivElement | null>;
   setActiveTool: (tool: DrawingTool) => void;
 };
 
-export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
+export function useCanvasPan({ contentRef, setActiveTool }: PanDeps) {
   const previousToolRef = useRef<DrawingTool>("brush");
   const isPanningRef = useRef(false);
+  const panOffsetRef = useRef({ x: 0, y: 0 });
   const panStateRef = useRef({
     pointerId: -1,
     startX: 0,
     startY: 0,
-    scrollLeft: 0,
-    scrollTop: 0,
+    baseX: 0,
+    baseY: 0,
     temporaryHand: false,
   });
 
   const beginPan = (event: PointerEvent<HTMLCanvasElement>, temporaryHand: boolean, currentTool?: DrawingTool) => {
-    const container = canvasAreaRef.current;
-    if (!container) return;
-
     if (temporaryHand && currentTool) {
       previousToolRef.current = currentTool;
       setActiveTool("hand");
@@ -35,8 +33,8 @@ export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      scrollLeft: container.scrollLeft,
-      scrollTop: container.scrollTop,
+      baseX: panOffsetRef.current.x,
+      baseY: panOffsetRef.current.y,
       temporaryHand,
     };
   };
@@ -44,15 +42,15 @@ export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
   const updatePan = (event: { clientX: number; clientY: number; preventDefault: () => void }) => {
     event.preventDefault();
 
-    const container = canvasAreaRef.current;
-    if (!container) return;
+    const content = contentRef.current;
+    if (!content) return;
 
     const panState = panStateRef.current;
-    const deltaX = event.clientX - panState.startX;
-    const deltaY = event.clientY - panState.startY;
+    const newX = panState.baseX + (event.clientX - panState.startX);
+    const newY = panState.baseY + (event.clientY - panState.startY);
 
-    container.scrollLeft = panState.scrollLeft - deltaX;
-    container.scrollTop = panState.scrollTop - deltaY;
+    panOffsetRef.current = { x: newX, y: newY };
+    content.style.transform = `translate(${newX}px, ${newY}px)`;
   };
 
   const endPan = () => {
@@ -65,8 +63,8 @@ export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
       pointerId: -1,
       startX: 0,
       startY: 0,
-      scrollLeft: 0,
-      scrollTop: 0,
+      baseX: 0,
+      baseY: 0,
       temporaryHand: false,
     };
   };
@@ -74,6 +72,7 @@ export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
   return {
     isPanningRef,
     panStateRef,
+    panOffsetRef,
     beginPan,
     updatePan,
     endPan,

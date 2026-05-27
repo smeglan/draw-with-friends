@@ -10,11 +10,21 @@ type ZoomDeps = {
   canvasAreaRef: RefObject<HTMLDivElement | null>;
   canvasAreaSize: { width: number; height: number };
   canvasSizeRef: { current: CanvasDimensions };
+  contentRef: RefObject<HTMLDivElement | null>;
+  panOffsetRef: { current: { x: number; y: number } };
 };
 
-export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef }: ZoomDeps) {
+export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef, contentRef, panOffsetRef }: ZoomDeps) {
   const [canvasZoom, setCanvasZoom] = useState(1);
   const canvasZoomRef = useRef(1);
+
+  const applyPanOffset = useCallback((x: number, y: number) => {
+    panOffsetRef.current = { x, y };
+    const content = contentRef.current;
+    if (content) {
+      content.style.transform = `translate(${x}px, ${y}px)`;
+    }
+  }, [contentRef, panOffsetRef]);
 
   const handleCanvasWheel = useCallback((event: WheelEvent) => {
     event.preventDefault();
@@ -36,22 +46,22 @@ export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef }: 
     );
     if (newZoom === oldZoom) return;
 
-    const areaW = canvasAreaSize.width || canvasSizeRef.current.width;
-    const areaH = canvasAreaSize.height || canvasSizeRef.current.height;
-
-    const contentX = clientX + container.scrollLeft;
-    const contentY = clientY + container.scrollTop;
-    const fracX = contentX / Math.max(1, areaW * oldZoom);
-    const fracY = contentY / Math.max(1, areaH * oldZoom);
+    const oldPan = panOffsetRef.current;
+    const ratio = newZoom / oldZoom;
+    const newPanX = oldPan.x * ratio + clientX * (1 - ratio);
+    const newPanY = oldPan.y * ratio + clientY * (1 - ratio);
 
     setCanvasZoom(newZoom);
     canvasZoomRef.current = newZoom;
 
     window.requestAnimationFrame(() => {
-      container.scrollLeft = fracX * (areaW * newZoom) - clientX;
-      container.scrollTop = fracY * (areaH * newZoom) - clientY;
+      panOffsetRef.current = { x: newPanX, y: newPanY };
+      const content = contentRef.current;
+      if (content) {
+        content.style.transform = `translate(${newPanX}px, ${newPanY}px)`;
+      }
     });
-  }, [canvasAreaSize.width, canvasAreaSize.height, canvasAreaRef, canvasSizeRef]);
+  }, [canvasAreaRef, contentRef, panOffsetRef]);
 
   const fitCanvasToScreen = useCallback(() => {
     const width = canvasAreaSize.width;
@@ -72,14 +82,13 @@ export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef }: 
     setCanvasZoom(newZoom);
     canvasZoomRef.current = newZoom;
 
-    const container = canvasAreaRef.current;
-    if (!container) return;
+    const newPanX = (width - cw * newZoom) / 2;
+    const newPanY = (height - ch * newZoom) / 2;
 
     window.requestAnimationFrame(() => {
-      container.scrollLeft = Math.max(0, (container.scrollWidth - container.clientWidth) / 2);
-      container.scrollTop = Math.max(0, (container.scrollHeight - container.clientHeight) / 2);
+      applyPanOffset(newPanX, newPanY);
     });
-  }, [canvasAreaSize.height, canvasAreaSize.width, canvasAreaRef, canvasSizeRef]);
+  }, [canvasAreaSize.height, canvasAreaSize.width, canvasSizeRef, applyPanOffset]);
 
   const didFitRef = useRef(false);
 
