@@ -70,27 +70,30 @@ type PaletteDeps = {
 };
 
 export function useCanvasPalettes({ brushColor, setBrushColor }: PaletteDeps) {
-  const [customColors, setCustomColors] = useState<(string | null)[]>(() => createDefaultPaletteColors());
   const [savedPalettes, setSavedPalettes] = useState<SavedPalette[]>([]);
   const [activePaletteId, setActivePaletteId] = useState<string | null>(null);
+  const [customColors, setCustomColors] = useState<(string | null)[]>(() => createDefaultPaletteColors());
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(-1);
   const selectedSlotIndexRef = useRef(-1);
 
   useEffect(() => {
-    const palettes = readStoredPalettes();
-    setSavedPalettes(palettes);
+    const id = setTimeout(() => {
+      const palettes = readStoredPalettes();
+      setSavedPalettes(palettes);
 
-    if (typeof window === "undefined") return;
+      if (typeof window === "undefined") return;
 
-    const storedActivePaletteId = window.localStorage.getItem(ACTIVE_PALETTE_STORAGE_KEY);
-    if (!storedActivePaletteId) return;
+      const storedActivePaletteId = window.localStorage.getItem(ACTIVE_PALETTE_STORAGE_KEY);
+      if (!storedActivePaletteId) return;
 
-    const activePalette = palettes.find((palette) => palette.id === storedActivePaletteId);
-    if (!activePalette) return;
+      const activePalette = palettes.find((palette) => palette.id === storedActivePaletteId);
+      if (!activePalette) return;
 
-    setActivePaletteId(activePalette.id);
-    setCustomColors(activePalette.colors);
-    setBrushColor(findFirstColor(activePalette.colors));
+      setActivePaletteId(activePalette.id);
+      setCustomColors(activePalette.colors);
+      setBrushColor(findFirstColor(activePalette.colors));
+    }, 0);
+    return () => clearTimeout(id);
   }, [setBrushColor]);
 
   useEffect(() => {

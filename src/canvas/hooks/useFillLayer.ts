@@ -4,7 +4,7 @@ import { useRef } from "react";
 import type { CanvasAction, Layer } from "@/canvas/types";
 
 export function useFillLayer(
-  canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  _canvasRef: React.RefObject<HTMLCanvasElement | null>,
   _canvasScaleRef: { current: number },
   _actionsRef: { current: CanvasAction[] },
 ) {

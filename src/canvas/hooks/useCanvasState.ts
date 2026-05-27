@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { RefObject } from "react";
 import type { CanvasAction, CanvasDimensions, Layer } from "@/canvas/types";
 import { useFillLayer } from "@/canvas/hooks/useFillLayer";
 import { useCanvasRendering } from "@/canvas/hooks/useCanvasRendering";

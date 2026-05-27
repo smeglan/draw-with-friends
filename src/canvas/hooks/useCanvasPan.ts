@@ -41,7 +41,7 @@ export function useCanvasPan({ canvasAreaRef, setActiveTool }: PanDeps) {
     };
   };
 
-  const updatePan = (event: PointerEvent<HTMLCanvasElement>) => {
+  const updatePan = (event: { clientX: number; clientY: number; preventDefault: () => void }) => {
     event.preventDefault();
 
     const container = canvasAreaRef.current;

@@ -35,14 +35,17 @@ function scaleCanvasActions(
     if (action.type === "fill") {
       return { ...action, x: action.x * scaleX, y: action.y * scaleY };
     }
-    return {
-      ...action,
-      size: action.size * scaleSize,
-      startX: action.startX * scaleX,
-      startY: action.startY * scaleY,
-      endX: action.endX * scaleX,
-      endY: action.endY * scaleY,
-    };
+    if (action.type === "shape") {
+      return {
+        ...action,
+        size: action.size * scaleSize,
+        startX: action.startX * scaleX,
+        startY: action.startY * scaleY,
+        endX: action.endX * scaleX,
+        endY: action.endY * scaleY,
+      };
+    }
+    return action;
   });
 }
 
@@ -270,7 +273,7 @@ export function useDrawingBoard() {
           clientX: data.clientX,
           clientY: data.clientY,
           preventDefault: () => {},
-        } as any);
+        });
         return;
       }
 

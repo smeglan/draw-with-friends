@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Icon } from "@/shared/icons";
 import { ToolButton } from "@/canvas/components/molecules/ToolButton";
 import { ShapeMenu } from "@/canvas/components/organisms/ShapeMenu";
 import type { DrawingTool, ShapeType } from "@/canvas/types";

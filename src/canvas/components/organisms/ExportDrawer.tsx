@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { RefObject } from "react";
 
 import type { CanvasDimensions, CanvasSizePreset } from "@/canvas/types";
@@ -62,11 +62,6 @@ export function ExportDrawer({
   const [open, setOpen] = useState(false);
   const [draftWidth, setDraftWidth] = useState(canvasSize.width.toString());
   const [draftHeight, setDraftHeight] = useState(canvasSize.height.toString());
-
-  useEffect(() => {
-    setDraftWidth(canvasSize.width.toString());
-    setDraftHeight(canvasSize.height.toString());
-  }, [canvasSize.height, canvasSize.width]);
 
   const handleExport = async (format: ExportFormat) => {
     const canvas = canvasRef.current;

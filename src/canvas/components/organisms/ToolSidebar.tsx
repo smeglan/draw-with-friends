@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { ColorSection } from "@/canvas/components/molecules/ColorSection";
 import { PaletteSection } from "@/canvas/components/molecules/PaletteSection";
 import { ToolsSection } from "@/canvas/components/molecules/ToolsSection";
