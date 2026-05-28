@@ -118,7 +118,6 @@ export function ExportDrawer({
         title="Lienzo"
       >
         <Icon name="menu" className="h-4 w-4" />
-        <span className="hidden sm:inline">Lienzo</span>
       </button>
 
       <div

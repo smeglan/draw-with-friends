@@ -21,7 +21,8 @@ export type IconName =
   | "delete"
   | "palette"
   | "undo"
-  | "redo";
+  | "redo"
+  | "home";
 
 type IconProps = {
   name: IconName;
@@ -180,6 +181,12 @@ const ICON_MAP: Record<IconName, (props: { className?: string }) => React.ReactN
     <IconSvg className="h-5 w-5">
       <path d="M15 7h5v5" />
       <path d="M20 12c-2-3-5-5-9-5-4.4 0-8 3.6-8 8s3.6 8 8 8c2.7 0 5.1-1.3 6.6-3.3" />
+    </IconSvg>
+  ),
+  home: () => (
+    <IconSvg className="h-5 w-5">
+      <path d="M3 12 12 3l9 9" />
+      <path d="M5 10v9a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-9" />
     </IconSvg>
   ),
 };

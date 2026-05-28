@@ -1,7 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/shared/icons";
+import { ConfirmLeaveModal } from "@/shared/components/ConfirmLeaveModal";
 import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import { BrushSizeBar } from "@/canvas/components/molecules/BrushSizeBar";
 import { BucketSensitivityBar } from "@/canvas/components/molecules/BucketSensitivityBar";
@@ -51,6 +53,9 @@ export function CanvasToolbar({
   onUndo,
   onRedo,
 }: CanvasToolbarProps) {
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const router = useRouter();
+
   const isFullscreen = useSyncExternalStore(
     (cb) => {
       document.addEventListener("fullscreenchange", cb);
@@ -73,6 +78,23 @@ export function CanvasToolbar({
 
   return (
     <div className="flex flex-col items-stretch gap-3 px-3 pt-14 lg:flex-row lg:items-start lg:px-3 lg:pt-3">
+      <button
+        type="button"
+        onClick={() => setShowLeaveModal(true)}
+        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-slate-200 transition hover:border-white/20 hover:bg-white/15 hover:text-white"
+        aria-label="Volver al inicio"
+        title="Volver al inicio"
+      >
+        <Icon name="home" />
+      </button>
+
+      {showLeaveModal && (
+        <ConfirmLeaveModal
+          onConfirm={() => router.push("/")}
+          onCancel={() => setShowLeaveModal(false)}
+        />
+      )}
+
       <ExportDrawer
         canvasRef={canvasRef}
         canvasSize={canvasSize}
