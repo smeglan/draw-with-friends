@@ -5,6 +5,29 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Estructura recomendada para el MVP del juego de dibujo multiplayer
 
+## Proyecto dividido en:
+
+- frontend Next.js desplegado en Vercel
+- signaling server Node.js desplegado en Railway
+- WebRTC DataChannels para comunicación realtime P2P
+- Socket.IO usado SOLO para signaling y rooms
+- no usar base de datos
+- no usar Redis
+- no usar autenticación
+- no usar microservicios
+- mantener el proyecto simple y minimalista
+
+## Objetivo MVP:
+
+- conectar dos clientes
+- unirlos a una room
+- intercambiar signaling
+- crear conexión WebRTC
+- enviar coordenadas simples de dibujo
+- renderizar puntos remotos
+
+**Priorizar simplicidad sobre escalabilidad.**
+
 ## Filosofía del proyecto
 
 Este proyecto NO busca ser:
@@ -23,7 +46,7 @@ El objetivo es:
 * Permitir vibecoding sin destruir el proyecto
 * Tener una arquitectura suficientemente limpia para crecer sin convertirse en un monstruo
 
-La prioridad es VELOCIDAD DE ITERACIÓN.
+**La prioridad es VELOCIDAD DE ITERACIÓN.**
 
 ---
 

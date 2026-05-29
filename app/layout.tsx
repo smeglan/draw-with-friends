@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { UsernameProvider } from "@/shared/context/UsernameContext";
+import { SocketProvider } from "@/network/client/SocketProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,7 +32,9 @@ export default function RootLayout({
     >
       <body className="min-h-[100dvh] w-full overflow-hidden bg-background">
         <AppRouterCacheProvider>
-          <UsernameProvider>{children}</UsernameProvider>
+          <UsernameProvider>
+            <SocketProvider>{children}</SocketProvider>
+          </UsernameProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
