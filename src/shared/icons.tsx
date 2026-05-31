@@ -22,7 +22,11 @@ export type IconName =
   | "palette"
   | "undo"
   | "redo"
-  | "home";
+  | "home"
+  | "copy"
+  | "share"
+  | "arrowLeft"
+  | "crown";
 
 type IconProps = {
   name: IconName;
@@ -187,6 +191,33 @@ const ICON_MAP: Record<IconName, (props: { className?: string }) => React.ReactN
     <IconSvg className="h-5 w-5">
       <path d="M3 12 12 3l9 9" />
       <path d="M5 10v9a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-9" />
+    </IconSvg>
+  ),
+  copy: () => (
+    <IconSvg className="h-4 w-4">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </IconSvg>
+  ),
+  share: () => (
+    <IconSvg className="h-4 w-4">
+      <path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </IconSvg>
+  ),
+  arrowLeft: () => (
+    <IconSvg className="h-4 w-4">
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </IconSvg>
+  ),
+  crown: () => (
+    <IconSvg className="h-4 w-4">
+      <path d="M2 20h20L19 8l-7 4-7-4L2 20Z" />
+      <circle cx="6.5" cy="7.5" r="1.5" />
+      <circle cx="12" cy="5" r="1.5" />
+      <circle cx="17.5" cy="7.5" r="1.5" />
     </IconSvg>
   ),
 };

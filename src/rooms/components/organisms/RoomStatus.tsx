@@ -7,13 +7,15 @@ import { ErrorBanner } from "@/rooms/components/molecules/ErrorBanner";
 
 type Props = {
   players: Player[];
+  hostId: string | null;
   isJoined: boolean;
   error: string | null;
   isConnected: boolean;
+  peerStatus: string;
   roomId: string;
 };
 
-export function RoomStatus({ players, isJoined, error, isConnected, roomId }: Props) {
+export function RoomStatus({ players, hostId, isJoined, error, isConnected, peerStatus, roomId }: Props) {
   const playerCount = players.length;
   const canPlay = playerCount >= 2;
 
@@ -47,9 +49,22 @@ export function RoomStatus({ players, isJoined, error, isConnected, roomId }: Pr
               {playerCount !== 1 ? "s" : ""}
               {!canPlay && " (mínimo 2)"}
             </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {peerStatus === "idle" && "Esperando conexión P2P..."}
+              {peerStatus === "connecting" && "Estableciendo conexión P2P..."}
+              {peerStatus === "connected" && (
+                <span className="text-green-400">Conexión P2P establecida</span>
+              )}
+              {peerStatus === "disconnected" && (
+                <span className="text-red-400">Conexión P2P perdida</span>
+              )}
+              {peerStatus === "error" && (
+                <span className="text-red-400">Error en conexión P2P</span>
+              )}
+            </p>
           </div>
 
-          <PlayerList players={players} />
+          <PlayerList players={players} hostId={hostId} />
 
           {canPlay && (
             <Link
