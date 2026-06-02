@@ -13,9 +13,10 @@ export class ChatManager {
   private unsubData: (() => void) | null = null;
   private unsubStatus: (() => void) | null = null;
 
-  constructor(peer: PeerManager, username: string) {
+  constructor(peer: PeerManager, username: string, initialMessages: ChatMessage[] = []) {
     this.peer = peer;
     this._username = username;
+    this._messages = initialMessages;
   }
 
   get messages(): ChatMessage[] {
@@ -85,6 +86,5 @@ export class ChatManager {
     this.unsubData?.();
     this.unsubStatus?.();
     this.listeners.clear();
-    this._messages = [];
   }
 }

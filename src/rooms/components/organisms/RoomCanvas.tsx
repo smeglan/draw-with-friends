@@ -5,15 +5,37 @@ import type { StrokeData } from "@/network/events";
 import { Icon } from "@/shared/icons";
 import { ColorSection } from "@/canvas/components/molecules/ColorSection";
 import { useMiniCanvas } from "@/rooms/hooks/useMiniCanvas";
+import type { PeerStatus } from "@/network/client/PeerManager";
 
 type Props = {
+  strokes: StrokeData[];
   onStrokeComplete: (stroke: StrokeData) => void;
-  onStrokeReceived: (cb: (stroke: StrokeData) => void) => () => void;
+  onUndo: () => void;
+  onClear: () => void;
   myId: string | null;
+  hostId: string | null;
+  peerStatus: PeerStatus;
 };
 
-export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) {
+export function RoomCanvas({
+  strokes,
+  onStrokeComplete,
+  onUndo,
+  onClear,
+  myId,
+  hostId,
+  peerStatus,
+}: Props) {
   const [toolsOpen, setToolsOpen] = useState(true);
+  const isHost = myId !== null && hostId !== null && myId === hostId;
+  const syncLabel =
+    peerStatus === "connected"
+      ? isHost
+        ? "Host sync"
+        : "Live sync"
+      : peerStatus === "connecting"
+        ? "Syncing"
+        : "Waiting";
 
   const {
     canvasRef,
@@ -30,8 +52,8 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
     handlePointerUp,
     handleUndo,
     handleClear,
+    syncStrokeActions,
     initCanvas,
-    addRemoteStroke,
   } = useMiniCanvas({
     onStrokeComplete: (stroke) => {
       onStrokeComplete({ ...stroke, playerId: myId ?? "local" });
@@ -46,21 +68,30 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
   }, [initCanvas]);
 
   useEffect(() => {
-    return onStrokeReceived((stroke) => {
-      addRemoteStroke(stroke);
-    });
-  }, [onStrokeReceived, addRemoteStroke]);
+    syncStrokeActions(strokes);
+  }, [strokes, syncStrokeActions]);
 
   const handleWheelColorChange = useCallback((color: string) => {
     setBrushColor(color);
   }, [setBrushColor]);
 
+  const handleUndoClick = useCallback(() => {
+    handleUndo();
+    onUndo();
+  }, [handleUndo, onUndo]);
+
+  const handleClearClick = useCallback(() => {
+    handleClear();
+    onClear();
+  }, [handleClear, onClear]);
+
   return (
-    <div className="flex min-w-0 flex-1">
+    <div className="flex min-w-0 flex-1 flex-col xl:flex-row">
       <div
         className={[
-          "flex flex-col gap-3 overflow-hidden border-r border-white/10 bg-white/[0.02] p-3 transition-all duration-200",
-          toolsOpen ? "w-72" : "w-0 border-transparent p-0",
+          "flex flex-col gap-3 overflow-hidden border-white/10 bg-white/[0.02] p-3 transition-all duration-200",
+          "border-b xl:border-b-0 xl:border-r",
+          toolsOpen ? "w-full xl:w-72" : "h-0 border-transparent p-0 xl:h-auto xl:w-0",
         ].join(" ")}
       >
         <ColorSection
@@ -94,7 +125,7 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={handleUndo}
+            onClick={handleUndoClick}
             disabled={strokesCount === 0}
             className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Deshacer"
@@ -105,7 +136,7 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
           </button>
           <button
             type="button"
-            onClick={handleClear}
+            onClick={handleClearClick}
             disabled={strokesCount === 0}
             className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-red-400/40 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Limpiar"
@@ -120,20 +151,42 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
       <button
         type="button"
         onClick={() => setToolsOpen((o) => !o)}
-        className="flex w-7 shrink-0 items-center justify-center border-r border-white/10 bg-white/[0.02] text-slate-500 transition hover:bg-white/5 hover:text-cyan-400"
+        className="flex h-9 w-full shrink-0 items-center justify-center border-b border-white/10 bg-white/[0.02] text-slate-500 transition hover:bg-white/5 hover:text-cyan-400 xl:h-auto xl:w-7 xl:border-b-0 xl:border-r"
         title={toolsOpen ? "Ocultar herramientas" : "Mostrar herramientas"}
       >
-        <Icon name="brush" className="h-4 w-4" />
+        <span className="flex items-center gap-2">
+          <Icon name="brush" className="h-4 w-4" />
+          <span className="text-[11px] uppercase tracking-[0.08em] xl:hidden">
+            {toolsOpen ? "Ocultar" : "Herramientas"}
+          </span>
+        </span>
       </button>
 
       <div
         ref={containerRef}
-        className="flex flex-1 items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.6),rgba(2,6,23,0.95))]"
+        className="relative flex min-h-[60vh] flex-1 items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.62),rgba(2,6,23,0.96))] xl:min-h-0"
       >
-        <div className="relative" style={{ width: canvasSize.width, height: canvasSize.height }}>
+        <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-wrap gap-2">
+          <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[11px] text-slate-300 backdrop-blur">
+            {syncLabel}
+          </div>
+          <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[11px] text-slate-300 backdrop-blur">
+            {strokesCount} strokes
+          </div>
+        </div>
+
+        <div
+          className="relative"
+          style={{
+            width: canvasSize.width,
+            height: canvasSize.height,
+            maxWidth: "100%",
+            maxHeight: "100%",
+          }}
+        >
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 touch-none"
+            className="absolute inset-0 touch-none rounded-2xl shadow-[0_24px_120px_rgba(15,23,42,0.5)]"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -141,7 +194,7 @@ export function RoomCanvas({ onStrokeComplete, onStrokeReceived, myId }: Props) 
           />
           <canvas
             ref={previewCanvasRef}
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 rounded-2xl"
           />
         </div>
       </div>

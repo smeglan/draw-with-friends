@@ -17,13 +17,18 @@ const INITIAL: OrchestratorState = {
   strokes: [],
 };
 
-export function useRoomOrchestrator(roomId: string, username: string | null) {
+export function useRoomOrchestrator(
+  roomId: string,
+  username: string | null,
+  password?: string | null,
+  enabled = true,
+) {
   const { socket } = useSocket();
   const [state, setState] = useState<OrchestratorState>(INITIAL);
   const orchRef = useRef<RoomOrchestrator | null>(null);
 
   useEffect(() => {
-    if (!username) return;
+    if (!username || !enabled) return;
 
     const orch = new RoomOrchestrator(socket);
     orchRef.current = orch;
@@ -32,14 +37,14 @@ export function useRoomOrchestrator(roomId: string, username: string | null) {
       setState({ ...orch.state });
     });
 
-    orch.start(roomId, username);
+    orch.start(roomId, username, password ?? undefined);
 
     return () => {
       unsub();
       orch.destroy();
       orchRef.current = null;
     };
-  }, [roomId, username, socket]);
+  }, [enabled, roomId, username, password, socket]);
 
   const sendChat = useCallback((text: string) => {
     orchRef.current?.sendChat(text);
@@ -49,10 +54,13 @@ export function useRoomOrchestrator(roomId: string, username: string | null) {
     orchRef.current?.sendStroke(stroke);
   }, []);
 
-  const onStroke = useCallback((cb: (stroke: StrokeData) => void) => {
-    if (!orchRef.current) return () => {};
-    return orchRef.current.onStroke(cb);
+  const sendUndo = useCallback(() => {
+    orchRef.current?.sendUndo();
   }, []);
 
-  return { state, sendChat, sendStroke, onStroke, orchRef };
+  const sendClear = useCallback(() => {
+    orchRef.current?.sendClear();
+  }, []);
+
+  return { state, sendChat, sendStroke, sendUndo, sendClear, orchRef };
 }

@@ -13,7 +13,6 @@ export interface OrchestratorState extends RoomManagerState {
 }
 
 export type StateListener = () => void;
-export type StrokeListener = (stroke: StrokeData) => void;
 
 const INITIAL_STATE: OrchestratorState = {
   players: [],
@@ -33,20 +32,17 @@ export class RoomOrchestrator {
   private chatManager: ChatManager | null = null;
   private _state: OrchestratorState = { ...INITIAL_STATE };
   private stateListeners = new Set<StateListener>();
-  private strokeListeners = new Set<StrokeListener>();
   private cleanupFns: (() => void)[] = [];
   private unsubStrokeData: (() => void) | null = null;
+  private unsubPeerStatus: (() => void) | null = null;
+  private snapshotSent = false;
+  private peerRetryTimer: ReturnType<typeof setTimeout> | null = null;
   private socket: TypedSocket;
   private username: string = "";
 
   constructor(socket: TypedSocket) {
     this.socket = socket;
     this.roomManager = new RoomManager(socket);
-  }
-
-  onStroke(cb: StrokeListener): () => void {
-    this.strokeListeners.add(cb);
-    return () => this.strokeListeners.delete(cb);
   }
 
   get state(): OrchestratorState {
@@ -63,7 +59,38 @@ export class RoomOrchestrator {
     this.stateListeners.forEach((cb) => cb());
   }
 
-  start(roomId: string, username: string) {
+  private clearPeerRetryTimer() {
+    if (this.peerRetryTimer) {
+      clearTimeout(this.peerRetryTimer);
+      this.peerRetryTimer = null;
+    }
+  }
+
+  private resetPeerChannel() {
+    this.unsubStrokeData?.();
+    this.unsubStrokeData = null;
+    this.unsubPeerStatus?.();
+    this.unsubPeerStatus = null;
+    this.chatManager?.destroy();
+    this.chatManager = null;
+    this.peerManager?.destroy();
+    this.peerManager = null;
+    this.snapshotSent = false;
+    this.setState({ peerStatus: "idle" });
+  }
+
+  private schedulePeerRetry() {
+    if (this.peerRetryTimer) return;
+
+    this.peerRetryTimer = setTimeout(() => {
+      this.peerRetryTimer = null;
+      const { isJoined, players } = this.roomManager.state;
+      if (this.peerManager || !isJoined || players.length < 2) return;
+      this.initiatePeer();
+    }, 1000);
+  }
+
+  start(roomId: string, username: string, password?: string) {
     this.username = username;
 
     this.roomManager.attach();
@@ -73,7 +100,7 @@ export class RoomOrchestrator {
 
     this.socket.on("signal", this.onIncomingSignal);
 
-    this.roomManager.join(roomId, username);
+    this.roomManager.join(roomId, username, password);
   }
 
   private onRoomChange() {
@@ -88,13 +115,45 @@ export class RoomOrchestrator {
       isConnected: rs.isConnected,
     });
 
-    if (rs.isJoined && rs.players.length >= 2 && !this.peerManager) {
+    if (!rs.isJoined) {
+      if (this.peerManager) {
+        this.teardownPeer();
+      }
+      return;
+    }
+
+    if (rs.players.length >= 2 && !this.peerManager) {
       this.initiatePeer();
     }
 
-    if (rs.isJoined && rs.players.length < 2 && this.peerManager) {
+    if (rs.players.length < 2 && this.peerManager) {
       this.teardownPeer();
     }
+  }
+
+  private applyCanvasEvent(
+    event:
+      | { type: "stroke"; payload: StrokeData }
+      | { type: "snapshot"; payload: { strokes: StrokeData[]; timestamp: number; playerId: string } }
+      | { type: "undo"; payload: { playerId: string; timestamp: number } }
+      | { type: "clear"; payload: { playerId: string; timestamp: number } },
+  ) {
+    if (event.type === "stroke") {
+      this.setState({ strokes: [...this._state.strokes, event.payload] });
+      return;
+    }
+
+    if (event.type === "snapshot") {
+      this.setState({ strokes: event.payload.strokes });
+      return;
+    }
+
+    if (event.type === "undo") {
+      this.setState({ strokes: this._state.strokes.slice(0, -1) });
+      return;
+    }
+
+    this.setState({ strokes: [] });
   }
 
   private initiatePeer() {
@@ -135,9 +194,24 @@ export class RoomOrchestrator {
 
     this.peerManager = new PeerManager(config);
 
-    this.cleanupFns.push(
-      this.peerManager.onStatusChange(() => this.onPeerChange())
-    );
+    this.unsubStrokeData = this.peerManager.onData((raw: string) => {
+      try {
+        const msg = JSON.parse(raw);
+        if (
+          msg.type === "stroke" ||
+          msg.type === "snapshot" ||
+          msg.type === "undo" ||
+          msg.type === "clear"
+        ) {
+          this.applyCanvasEvent(msg);
+        }
+      } catch {
+        // ignore malformed messages
+      }
+    });
+
+    this.unsubPeerStatus?.();
+    this.unsubPeerStatus = this.peerManager.onStatusChange(() => this.onPeerChange());
 
     this.peerManager.connect();
     this.setState({ peerStatus: "connecting" });
@@ -149,8 +223,25 @@ export class RoomOrchestrator {
     const peerStatus = this.peerManager.status;
     this.setState({ peerStatus });
 
+    if (peerStatus === "connected") {
+      this.clearPeerRetryTimer();
+    }
+
+    if (peerStatus !== "connected") {
+      this.snapshotSent = false;
+    }
+
+    if (peerStatus === "disconnected" || peerStatus === "error") {
+      const shouldRetry = this.roomManager.state.isJoined && this.roomManager.state.players.length >= 2;
+      this.resetPeerChannel();
+      if (shouldRetry) {
+        this.schedulePeerRetry();
+      }
+      return;
+    }
+
     if (peerStatus === "connected" && !this.chatManager) {
-      this.chatManager = new ChatManager(this.peerManager, this.username);
+      this.chatManager = new ChatManager(this.peerManager, this.username, this._state.messages);
       this.chatManager.attach();
       this.cleanupFns.push(
         this.chatManager.subscribe(() => {
@@ -160,20 +251,23 @@ export class RoomOrchestrator {
       this.setState({ messages: this.chatManager.messages });
     }
 
-    if (peerStatus === "connected" && !this.unsubStrokeData) {
-      this.unsubStrokeData = this.peerManager.onData((raw: string) => {
-        try {
-          const msg = JSON.parse(raw);
-          if (msg.type === "stroke") {
-            const stroke = msg.payload as StrokeData;
-            this.setState({ strokes: [...this._state.strokes, stroke] });
-            this.strokeListeners.forEach((cb) => cb(stroke));
-          }
-        } catch {
-          // ignore malformed messages
-        }
-      });
+    if (peerStatus === "connected" && !this.snapshotSent) {
+      const { myId, hostId } = this.roomManager.state;
+      const isHost = !!myId && !!hostId && myId === hostId;
+      if (isHost) {
+        this.snapshotSent = true;
+        const envelope = {
+          type: "snapshot",
+          payload: {
+            playerId: this.username,
+            timestamp: Date.now(),
+            strokes: this._state.strokes,
+          },
+        };
+        this.peerManager.send(JSON.stringify(envelope));
+      }
     }
+
   }
 
   private onIncomingSignal = (data: IncomingSignal) => {
@@ -193,13 +287,8 @@ export class RoomOrchestrator {
   };
 
   private teardownPeer() {
-    this.unsubStrokeData?.();
-    this.unsubStrokeData = null;
-    this.chatManager?.destroy();
-    this.chatManager = null;
-    this.peerManager?.destroy();
-    this.peerManager = null;
-    this.setState({ peerStatus: "idle", messages: [], strokes: [] });
+    this.clearPeerRetryTimer();
+    this.resetPeerChannel();
   }
 
   sendChat(text: string) {
@@ -212,16 +301,43 @@ export class RoomOrchestrator {
     this.setState({ strokes: [...this._state.strokes, stroke] });
   }
 
+  sendUndo() {
+    const envelope = {
+      type: "undo",
+      payload: {
+        playerId: this.username,
+        timestamp: Date.now(),
+      },
+    };
+    this.peerManager?.send(JSON.stringify(envelope));
+    this.setState({ strokes: this._state.strokes.slice(0, -1) });
+  }
+
+  sendClear() {
+    const envelope = {
+      type: "clear",
+      payload: {
+        playerId: this.username,
+        timestamp: Date.now(),
+      },
+    };
+    this.peerManager?.send(JSON.stringify(envelope));
+    this.setState({ strokes: [] });
+  }
+
   destroy() {
     this.socket.off("signal", this.onIncomingSignal);
+    this.clearPeerRetryTimer();
     this.unsubStrokeData?.();
     this.unsubStrokeData = null;
+    this.unsubPeerStatus?.();
+    this.unsubPeerStatus = null;
     this.chatManager?.destroy();
     this.peerManager?.destroy();
+    this.snapshotSent = false;
     this.cleanupFns.forEach((fn) => fn());
     this.cleanupFns = [];
     this.roomManager.destroy();
     this.stateListeners.clear();
-    this.strokeListeners.clear();
   }
 }

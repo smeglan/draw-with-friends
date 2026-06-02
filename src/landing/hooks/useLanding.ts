@@ -9,7 +9,7 @@ import type { RoomInfo } from "@/network/events";
 
 type Action = "create" | "join" | null;
 
-export function useLobby() {
+export function useLanding() {
   const router = useRouter();
   const { socket } = useSocket();
   const { username } = useUsername();
@@ -53,17 +53,20 @@ export function useLobby() {
     };
   }, [socket, router]);
 
-  const createRoom = useCallback((roomName?: string, password?: string) => {
-    setError(null);
-    setIsLoading(true);
-    actionRef.current = "create";
-    pendingPasswordRef.current = password ?? null;
-    if (password) {
-      socket.emit("createRoom", username, roomName, password);
-    } else {
-      socket.emit("createRoom", username, roomName);
-    }
-  }, [socket, username]);
+  const createRoom = useCallback(
+    (roomName?: string, password?: string) => {
+      setError(null);
+      setIsLoading(true);
+      actionRef.current = "create";
+      pendingPasswordRef.current = password ?? null;
+      if (password) {
+        socket.emit("createRoom", username, roomName, password);
+      } else {
+        socket.emit("createRoom", username, roomName);
+      }
+    },
+    [socket, username],
+  );
 
   const joinRoom = useCallback(
     (code: string, password?: string) => {

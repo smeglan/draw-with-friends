@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Player } from "@/network/events";
+import type { PeerStatus } from "@/network/client/PeerManager";
 import { ConnectionDot } from "@/rooms/components/atoms/ConnectionDot";
 import { PlayerList } from "@/rooms/components/molecules/PlayerList";
 
@@ -11,7 +12,7 @@ type Props = {
   isConnected: boolean;
   isJoined: boolean;
   error: string | null;
-  peerStatus: string;
+  peerStatus: PeerStatus;
   roomId: string;
 };
 
@@ -27,13 +28,26 @@ export function PlayerSidebar({
   const playerCount = players.length;
   const canPlay = playerCount >= 2;
   const [ready, setReady] = useState(false);
+  const statusLabel =
+    peerStatus === "connected"
+      ? "Live"
+      : peerStatus === "connecting"
+        ? "Syncing"
+        : peerStatus === "error"
+          ? "Error"
+          : peerStatus === "disconnected"
+            ? "Offline"
+            : "Idle";
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col gap-4 border-r border-white/10 bg-white/[0.02] p-4">
+    <aside className="flex w-full shrink-0 flex-col gap-4 border-b border-white/10 bg-white/[0.02] p-4 lg:w-72 lg:border-b-0 lg:border-r">
       <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
         <ConnectionDot connected={isConnected} />
         <span className="text-xs text-slate-400">Sala:</span>
         <span className="font-mono text-sm font-medium text-white">{roomId}</span>
+        <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-slate-300">
+          {statusLabel}
+        </span>
       </div>
 
       {!isConnected && (
@@ -86,7 +100,7 @@ export function PlayerSidebar({
             type="button"
             onClick={() => setReady((r) => !r)}
             className={[
-              "mt-auto rounded-xl px-6 py-3 font-medium transition",
+              "mt-auto rounded-xl px-6 py-3 font-medium transition lg:sticky lg:bottom-4",
               ready
                 ? "bg-green-500 text-white hover:bg-green-400"
                 : "border border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10",

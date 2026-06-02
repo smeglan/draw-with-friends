@@ -23,6 +23,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
 
   const actionsRef = useRef<Stroke[]>([]);
   const [strokesCount, setStrokesCount] = useState(0);
+  const lastSyncedRef = useRef(0);
 
   const currentStrokeRef = useRef<Stroke | null>(null);
   const lastPointRef = useRef<Point | null>(null);
@@ -42,6 +43,29 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
       renderStroke(ctx, action, 1);
     }
   }, []);
+
+  const syncStrokeActions = useCallback((nextStrokes: StrokeData[]) => {
+    if (currentStrokeRef.current) return;
+
+    if (nextStrokes.length <= lastSyncedRef.current) return;
+
+    const newStrokes = nextStrokes.slice(lastSyncedRef.current);
+    for (const s of newStrokes) {
+      const stroke: Stroke = {
+        type: "stroke",
+        tool: "brush",
+        color: s.color,
+        size: s.size,
+        points: s.points,
+        layerId: "room",
+        opacity: s.opacity,
+      };
+      actionsRef.current = [...actionsRef.current, stroke];
+    }
+    lastSyncedRef.current = nextStrokes.length;
+    setStrokesCount(actionsRef.current.length);
+    redrawCanvas();
+  }, [redrawCanvas]);
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -217,6 +241,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
     handlePointerUp,
     handleUndo,
     handleClear,
+    syncStrokeActions,
     initCanvas,
     addRemoteStroke,
   };

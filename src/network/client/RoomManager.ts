@@ -26,6 +26,11 @@ export class RoomManager {
 
   private listeners = new Set<RoomEventListener>();
   private socket: TypedSocket;
+  private pendingJoin: {
+    roomId: string;
+    username: string;
+    password?: string;
+  } | null = null;
 
   constructor(socket: TypedSocket) {
     this.socket = socket;
@@ -49,11 +54,14 @@ export class RoomManager {
     this.notify();
   }
 
-  join(roomId: string, username: string) {
+  join(roomId: string, username: string, password?: string) {
     if (!username) return;
 
+    this.pendingJoin = { roomId, username, password };
     this.setState({ error: null });
-    this.socket.emit("joinRoom", roomId, username);
+    if (this.socket.connected) {
+      this.socket.emit("joinRoom", roomId, username, password);
+    }
   }
 
   private onRoomJoined = (room: RoomInfo) => {
@@ -80,11 +88,16 @@ export class RoomManager {
   };
 
   private onError = (message: string) => {
+    this.pendingJoin = null;
     this.setState({ error: message, isJoined: false });
   };
 
   private onConnect = () => {
     this.setState({ isConnected: true });
+    if (!this.pendingJoin) return;
+
+    const { roomId, username, password } = this.pendingJoin;
+    this.socket.emit("joinRoom", roomId, username, password);
   };
 
   private onDisconnect = () => {
@@ -116,5 +129,6 @@ export class RoomManager {
   destroy() {
     this.detach();
     this.listeners.clear();
+    this.pendingJoin = null;
   }
 }

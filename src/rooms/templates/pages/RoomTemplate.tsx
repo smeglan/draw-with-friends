@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
@@ -10,6 +10,7 @@ import { PlayerSidebar } from "@/rooms/components/organisms/PlayerSidebar";
 import { RoomCanvas } from "@/rooms/components/organisms/RoomCanvas";
 import { ChatBox } from "@/network/client/components/ChatBox";
 import { useRoomOrchestrator } from "@/network/client/useRoomOrchestrator";
+import { getRoomPassword } from "@/shared/utils/roomPasswordStorage";
 
 type Props = {
   roomId: string;
@@ -17,13 +18,24 @@ type Props = {
 
 export function RoomTemplate({ roomId }: Props) {
   const { username, setUsername } = useUsername();
-  const { state, sendChat, sendStroke, onStroke } = useRoomOrchestrator(roomId, username);
+  const [roomPassword] = useState(() => getRoomPassword(roomId));
+  const { state, sendChat, sendStroke, sendUndo, sendClear } = useRoomOrchestrator(
+    roomId,
+    username,
+    roomPassword,
+  );
   const [dismissed, setDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const showPrompt = !username && !dismissed;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const showPrompt = !username && !dismissed && mounted;
   const showChat = state.isJoined && state.players.length >= 2;
   const hostUsername = state.players.find((p) => p.id === state.hostId)?.username ?? null;
+  const isHost = state.myId !== null && state.hostId !== null && state.myId === state.hostId;
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(roomId);
@@ -49,8 +61,8 @@ export function RoomTemplate({ roomId }: Props) {
   return (
     <>
       <div className="flex min-h-[100dvh] flex-col">
-        <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-          <div className="flex items-center gap-2">
+        <header className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/lobby"
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
@@ -71,9 +83,18 @@ export function RoomTemplate({ roomId }: Props) {
                 <Icon name="copy" className="h-4 w-4" />
               )}
             </button>
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-slate-300">
+              {state.peerStatus === "connected"
+                ? isHost
+                  ? "Host sync"
+                  : "Live sync"
+                : state.peerStatus === "connecting"
+                  ? "Syncing"
+                  : "Waiting"}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleShare}
@@ -89,7 +110,7 @@ export function RoomTemplate({ roomId }: Props) {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           <PlayerSidebar
             players={state.players}
             hostId={state.hostId}
@@ -101,13 +122,17 @@ export function RoomTemplate({ roomId }: Props) {
           />
 
           <RoomCanvas
+            strokes={state.strokes}
             onStrokeComplete={handleStrokeComplete}
-            onStrokeReceived={onStroke}
             myId={state.myId}
+            hostId={state.hostId}
+            onUndo={sendUndo}
+            onClear={sendClear}
+            peerStatus={state.peerStatus}
           />
 
           {showChat && (
-            <div className="w-80 shrink-0 border-l border-white/10">
+            <div className="w-full shrink-0 border-t border-white/10 lg:w-80 lg:border-l lg:border-t-0">
               <ChatBox
                 messages={state.messages}
                 onSend={sendChat}

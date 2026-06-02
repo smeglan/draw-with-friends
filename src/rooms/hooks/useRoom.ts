@@ -5,7 +5,7 @@ import { useSocket } from "@/network/client/SocketProvider";
 import { useUsername } from "@/shared/context/UsernameContext";
 import type { Player, RoomInfo } from "@/network/events";
 
-export function useRoom(roomId: string) {
+export function useRoom(roomId: string, password?: string) {
   const { socket, isConnected } = useSocket();
   const { username } = useUsername();
   const [players, setPlayers] = useState<Player[]>([]);
@@ -17,7 +17,7 @@ export function useRoom(roomId: string) {
 
     setError(null);
 
-    socket.emit("joinRoom", roomId, username);
+    socket.emit("joinRoom", roomId, username, password);
 
     function onRoomJoined(room: RoomInfo) {
       setPlayers(room.players);
@@ -48,7 +48,7 @@ export function useRoom(roomId: string) {
       socket.off("playerLeft", onPlayerLeft);
       socket.off("error", onError);
     };
-  }, [roomId, username, isConnected, socket]);
+  }, [roomId, username, password, isConnected, socket]);
 
   useEffect(() => {
     if (!isConnected) {

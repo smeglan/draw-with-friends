@@ -6,7 +6,7 @@ export const ZOOM_LIMITS = {
 export const DRAWING_LIMITS = {
   minBrushSize: 2,
   maxBrushSize: 40,
-  defaultBrushSize: 10,
+  defaultBrushSize: 4,
   minOpacity: 0,
   maxOpacity: 100,
   defaultOpacity: 100,

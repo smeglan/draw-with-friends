@@ -5,8 +5,10 @@ export interface Player {
 
 export interface RoomInfo {
   id: string;
+  name: string;
   players: Player[];
   hostId: string;
+  hasPassword: boolean;
 }
 
 export interface ChatMessage {
@@ -31,7 +33,10 @@ export type StrokeData = {
 
 export type DataChannelMessage =
   | { type: "chat"; payload: ChatMessage }
-  | { type: "stroke"; payload: StrokeData };
+  | { type: "stroke"; payload: StrokeData }
+  | { type: "snapshot"; payload: { strokes: StrokeData[]; timestamp: number; playerId: string } }
+  | { type: "undo"; payload: { playerId: string; timestamp: number } }
+  | { type: "clear"; payload: { playerId: string; timestamp: number } };
 
 export interface SignalPayload {
   targetId: string;
@@ -44,8 +49,8 @@ export interface IncomingSignal {
 }
 
 export interface ClientToServerEvents {
-  createRoom: (username: string) => void;
-  joinRoom: (roomId: string, username: string) => void;
+  createRoom: (username: string, roomName?: string, password?: string) => void;
+  joinRoom: (roomId: string, username: string, password?: string) => void;
   signal: (data: SignalPayload) => void;
 }
 

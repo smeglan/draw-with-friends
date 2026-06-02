@@ -28,43 +28,51 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
   };
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <p className="w-full text-center text-[10px] uppercase tracking-[0.08em] text-slate-400">Colores</p>
-      <div className="flex h-10 w-full overflow-hidden rounded-lg border border-white/15">
-        <div className="flex-1" style={{ backgroundColor: brushColor }} />
-        <button
-          type="button"
-          className="w-10 border-l border-white/15 transition hover:scale-105"
-          style={{ backgroundColor: "#000000" }}
-          onClick={() => onColorSelect("#000000")}
-          aria-label="Negro"
-        />
-        <button
-          type="button"
-          className="w-10 border-l border-white/15 transition hover:scale-105"
-          style={{ backgroundColor: "#ffffff" }}
-          onClick={() => onColorSelect("#ffffff")}
-          aria-label="Blanco"
-        />
-      </div>
+    <div className="w-full rounded-xl border border-white/10 bg-slate-950/35 p-3">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Colores</p>
+          <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-slate-300">
+            {brushColor}
+          </span>
+        </div>
 
-      <input
-        ref={inputRef}
-        type="text"
-        defaultValue={brushColor}
-        onBlur={submitHex}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") submitHex();
-          if (e.key === "Escape" && inputRef.current) {
-            inputRef.current.value = brushColor;
-          }
-        }}
-        className="mt-2 w-full rounded border border-white/20 bg-white/5 px-2 py-1 text-center text-xs text-white placeholder-slate-500"
-        placeholder="#000000"
+        <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-white/15">
+          <div className="min-h-10" style={{ backgroundColor: brushColor }} />
+          <button
+            type="button"
+            className="min-h-10 border-l border-white/15 transition hover:brightness-110"
+            style={{ backgroundColor: "#000000" }}
+            onClick={() => onColorSelect("#000000")}
+            aria-label="Negro"
+          />
+          <button
+            type="button"
+            className="min-h-10 border-l border-white/15 transition hover:brightness-110"
+            style={{ backgroundColor: "#ffffff" }}
+            onClick={() => onColorSelect("#ffffff")}
+            aria-label="Blanco"
+          />
+        </div>
+
+        <input
+          ref={inputRef}
+          type="text"
+          defaultValue={brushColor}
+          onBlur={submitHex}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") submitHex();
+            if (e.key === "Escape" && inputRef.current) {
+              inputRef.current.value = brushColor;
+            }
+          }}
+          className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-center text-xs text-white placeholder-slate-500 outline-none transition focus:border-cyan-400/50"
+          placeholder="#000000"
         />
 
-      <div className="mt-2 flex w-full justify-center">
-        <ColorWheel selectedColor={brushColor} onColorChange={onWheelColorChange} />
+        <div className="flex w-full justify-center rounded-xl border border-white/10 bg-white/[0.03] py-2">
+          <ColorWheel selectedColor={brushColor} onColorChange={onWheelColorChange} />
+        </div>
       </div>
     </div>
   );
