@@ -6,7 +6,8 @@ import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
 import { ConnectionDot } from "@/rooms/components/atoms/ConnectionDot";
-import { RoomStatus } from "@/rooms/components/organisms/RoomStatus";
+import { PlayerSidebar } from "@/rooms/components/organisms/PlayerSidebar";
+import { RoomCanvas } from "@/rooms/components/organisms/RoomCanvas";
 import { ChatBox } from "@/network/client/components/ChatBox";
 import { useRoomOrchestrator } from "@/network/client/useRoomOrchestrator";
 
@@ -16,7 +17,7 @@ type Props = {
 
 export function RoomTemplate({ roomId }: Props) {
   const { username, setUsername } = useUsername();
-  const { state, sendChat } = useRoomOrchestrator(roomId, username);
+  const { state, sendChat, sendStroke, onStroke } = useRoomOrchestrator(roomId, username);
   const [dismissed, setDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -40,6 +41,10 @@ export function RoomTemplate({ roomId }: Props) {
       setTimeout(() => setCopied(false), 2000);
     }
   }, [roomId]);
+
+  const handleStrokeComplete = useCallback((strokeData: Parameters<typeof sendStroke>[0]) => {
+    sendStroke(strokeData);
+  }, [sendStroke]);
 
   return (
     <>
@@ -84,21 +89,25 @@ export function RoomTemplate({ roomId }: Props) {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-6 p-4 lg:flex-row">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <RoomStatus
-              players={state.players}
-              hostId={state.hostId}
-              isJoined={state.isJoined}
-              error={state.error}
-              isConnected={state.isConnected}
-              peerStatus={state.peerStatus}
-              roomId={roomId}
-            />
-          </div>
+        <div className="flex min-h-0 flex-1">
+          <PlayerSidebar
+            players={state.players}
+            hostId={state.hostId}
+            isJoined={state.isJoined}
+            error={state.error}
+            isConnected={state.isConnected}
+            peerStatus={state.peerStatus}
+            roomId={roomId}
+          />
+
+          <RoomCanvas
+            onStrokeComplete={handleStrokeComplete}
+            onStrokeReceived={onStroke}
+            myId={state.myId}
+          />
 
           {showChat && (
-            <div className="h-80 w-full shrink-0 lg:h-auto lg:w-80">
+            <div className="w-80 shrink-0 border-l border-white/10">
               <ChatBox
                 messages={state.messages}
                 onSend={sendChat}

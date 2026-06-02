@@ -1,7 +1,7 @@
 "use client";
 
 import type { TypedSocket } from "./index";
-import type { IncomingSignal, ChatMessage } from "@/network/events";
+import type { IncomingSignal, ChatMessage, StrokeData } from "@/network/events";
 import { RoomManager, type RoomManagerState } from "./RoomManager";
 import { PeerManager, type PeerStatus, type PeerManagerConfig } from "./PeerManager";
 import { ChatManager } from "./ChatManager";
@@ -9,9 +9,11 @@ import { ChatManager } from "./ChatManager";
 export interface OrchestratorState extends RoomManagerState {
   peerStatus: PeerStatus;
   messages: ChatMessage[];
+  strokes: StrokeData[];
 }
 
 export type StateListener = () => void;
+export type StrokeListener = (stroke: StrokeData) => void;
 
 const INITIAL_STATE: OrchestratorState = {
   players: [],
@@ -22,6 +24,7 @@ const INITIAL_STATE: OrchestratorState = {
   isConnected: false,
   peerStatus: "idle",
   messages: [],
+  strokes: [],
 };
 
 export class RoomOrchestrator {
@@ -30,13 +33,20 @@ export class RoomOrchestrator {
   private chatManager: ChatManager | null = null;
   private _state: OrchestratorState = { ...INITIAL_STATE };
   private stateListeners = new Set<StateListener>();
+  private strokeListeners = new Set<StrokeListener>();
   private cleanupFns: (() => void)[] = [];
+  private unsubStrokeData: (() => void) | null = null;
   private socket: TypedSocket;
   private username: string = "";
 
   constructor(socket: TypedSocket) {
     this.socket = socket;
     this.roomManager = new RoomManager(socket);
+  }
+
+  onStroke(cb: StrokeListener): () => void {
+    this.strokeListeners.add(cb);
+    return () => this.strokeListeners.delete(cb);
   }
 
   get state(): OrchestratorState {
@@ -149,6 +159,21 @@ export class RoomOrchestrator {
       );
       this.setState({ messages: this.chatManager.messages });
     }
+
+    if (peerStatus === "connected" && !this.unsubStrokeData) {
+      this.unsubStrokeData = this.peerManager.onData((raw: string) => {
+        try {
+          const msg = JSON.parse(raw);
+          if (msg.type === "stroke") {
+            const stroke = msg.payload as StrokeData;
+            this.setState({ strokes: [...this._state.strokes, stroke] });
+            this.strokeListeners.forEach((cb) => cb(stroke));
+          }
+        } catch {
+          // ignore malformed messages
+        }
+      });
+    }
   }
 
   private onIncomingSignal = (data: IncomingSignal) => {
@@ -168,24 +193,35 @@ export class RoomOrchestrator {
   };
 
   private teardownPeer() {
+    this.unsubStrokeData?.();
+    this.unsubStrokeData = null;
     this.chatManager?.destroy();
     this.chatManager = null;
     this.peerManager?.destroy();
     this.peerManager = null;
-    this.setState({ peerStatus: "idle", messages: [] });
+    this.setState({ peerStatus: "idle", messages: [], strokes: [] });
   }
 
   sendChat(text: string) {
     this.chatManager?.sendMessage(text);
   }
 
+  sendStroke(stroke: StrokeData) {
+    const envelope = { type: "stroke", payload: stroke };
+    this.peerManager?.send(JSON.stringify(envelope));
+    this.setState({ strokes: [...this._state.strokes, stroke] });
+  }
+
   destroy() {
     this.socket.off("signal", this.onIncomingSignal);
+    this.unsubStrokeData?.();
+    this.unsubStrokeData = null;
     this.chatManager?.destroy();
     this.peerManager?.destroy();
     this.cleanupFns.forEach((fn) => fn());
     this.cleanupFns = [];
     this.roomManager.destroy();
     this.stateListeners.clear();
+    this.strokeListeners.clear();
   }
 }

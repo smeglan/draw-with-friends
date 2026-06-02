@@ -16,8 +16,22 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export type Point = {
+  x: number;
+  y: number;
+};
+
+export type StrokeData = {
+  playerId: string;
+  points: Point[];
+  color: string;
+  size: number;
+  opacity: number;
+};
+
 export type DataChannelMessage =
-  | { type: "chat"; payload: ChatMessage };
+  | { type: "chat"; payload: ChatMessage }
+  | { type: "stroke"; payload: StrokeData };
 
 export interface SignalPayload {
   targetId: string;

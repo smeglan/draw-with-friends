@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSocket } from "./SocketProvider";
 import { RoomOrchestrator, type OrchestratorState } from "./RoomOrchestrator";
+import type { StrokeData } from "@/network/events";
 
 const INITIAL: OrchestratorState = {
   players: [],
@@ -13,6 +14,7 @@ const INITIAL: OrchestratorState = {
   isConnected: false,
   peerStatus: "idle",
   messages: [],
+  strokes: [],
 };
 
 export function useRoomOrchestrator(roomId: string, username: string | null) {
@@ -43,5 +45,14 @@ export function useRoomOrchestrator(roomId: string, username: string | null) {
     orchRef.current?.sendChat(text);
   }, []);
 
-  return { state, sendChat };
+  const sendStroke = useCallback((stroke: StrokeData) => {
+    orchRef.current?.sendStroke(stroke);
+  }, []);
+
+  const onStroke = useCallback((cb: (stroke: StrokeData) => void) => {
+    if (!orchRef.current) return () => {};
+    return orchRef.current.onStroke(cb);
+  }, []);
+
+  return { state, sendChat, sendStroke, onStroke, orchRef };
 }
