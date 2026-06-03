@@ -31,6 +31,7 @@ export class RoomManager {
     username: string;
     password?: string;
   } | null = null;
+  private roomStatusResolve: ((room: RoomInfo) => void) | null = null;
 
   constructor(socket: TypedSocket) {
     this.socket = socket;
@@ -64,6 +65,25 @@ export class RoomManager {
     }
   }
 
+  leave() {
+    this.socket.emit("leaveRoom");
+    this.pendingJoin = null;
+    this.setState({
+      players: [],
+      hostId: null,
+      myId: null,
+      isJoined: false,
+      error: null,
+    });
+  }
+
+  requestRoomStatus(): Promise<RoomInfo> {
+    return new Promise((resolve) => {
+      this.roomStatusResolve = resolve;
+      this.socket.emit("getRoomStatus");
+    });
+  }
+
   private onRoomJoined = (room: RoomInfo) => {
     this.setState({
       players: room.players,
@@ -84,6 +104,21 @@ export class RoomManager {
   private onPlayerLeft = (playerId: string) => {
     this.setState({
       players: this._state.players.filter((p) => p.id !== playerId),
+    });
+  };
+
+  private onHostChanged = (newHostId: string) => {
+    this.setState({ hostId: newHostId });
+  };
+
+  private onRoomStatus = (room: RoomInfo) => {
+    if (this.roomStatusResolve) {
+      this.roomStatusResolve(room);
+      this.roomStatusResolve = null;
+    }
+    this.setState({
+      players: room.players,
+      hostId: room.hostId,
     });
   };
 
@@ -108,6 +143,8 @@ export class RoomManager {
     this.socket.on("roomJoined", this.onRoomJoined);
     this.socket.on("playerJoined", this.onPlayerJoined);
     this.socket.on("playerLeft", this.onPlayerLeft);
+    this.socket.on("hostChanged", this.onHostChanged);
+    this.socket.on("roomStatus", this.onRoomStatus);
     this.socket.on("error", this.onError);
     this.socket.on("connect", this.onConnect);
     this.socket.on("disconnect", this.onDisconnect);
@@ -121,6 +158,8 @@ export class RoomManager {
     this.socket.off("roomJoined", this.onRoomJoined);
     this.socket.off("playerJoined", this.onPlayerJoined);
     this.socket.off("playerLeft", this.onPlayerLeft);
+    this.socket.off("hostChanged", this.onHostChanged);
+    this.socket.off("roomStatus", this.onRoomStatus);
     this.socket.off("error", this.onError);
     this.socket.off("connect", this.onConnect);
     this.socket.off("disconnect", this.onDisconnect);
@@ -130,5 +169,6 @@ export class RoomManager {
     this.detach();
     this.listeners.clear();
     this.pendingJoin = null;
+    this.roomStatusResolve = null;
   }
 }

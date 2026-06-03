@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useSyncExternalStore } from "react";
 import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
@@ -19,20 +19,20 @@ type Props = {
 export function RoomTemplate({ roomId }: Props) {
   const { username, setUsername } = useUsername();
   const [roomPassword] = useState(() => getRoomPassword(roomId));
-  const { state, sendChat, sendStroke, sendUndo, sendClear } = useRoomOrchestrator(
+  const { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom } = useRoomOrchestrator(
     roomId,
     username,
     roomPassword,
   );
   const [dismissed, setDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const showPrompt = !username && !dismissed && mounted;
+  const showPrompt = !username && !dismissed && hydrated;
   const showChat = state.isJoined && state.players.length >= 2;
   const hostUsername = state.players.find((p) => p.id === state.hostId)?.username ?? null;
   const isHost = state.myId !== null && state.hostId !== null && state.myId === state.hostId;
@@ -65,6 +65,7 @@ export function RoomTemplate({ roomId }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/lobby"
+              onClick={leaveRoom}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
               title="Salir de la sala"
             >

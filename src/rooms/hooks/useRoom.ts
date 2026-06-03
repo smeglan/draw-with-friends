@@ -15,11 +15,10 @@ export function useRoom(roomId: string, password?: string) {
   useEffect(() => {
     if (!username || !isConnected) return;
 
-    setError(null);
-
     socket.emit("joinRoom", roomId, username, password);
 
     function onRoomJoined(room: RoomInfo) {
+      setError(null);
       setPlayers(room.players);
       setIsJoined(true);
     }
@@ -32,6 +31,10 @@ export function useRoom(roomId: string, password?: string) {
       setPlayers((prev) => prev.filter((p) => p.id !== playerId));
     }
 
+    function onDisconnect() {
+      setIsJoined(false);
+    }
+
     function onError(msg: string) {
       setError(msg);
       setIsJoined(false);
@@ -40,21 +43,17 @@ export function useRoom(roomId: string, password?: string) {
     socket.on("roomJoined", onRoomJoined);
     socket.on("playerJoined", onPlayerJoined);
     socket.on("playerLeft", onPlayerLeft);
+    socket.on("disconnect", onDisconnect);
     socket.on("error", onError);
 
     return () => {
       socket.off("roomJoined", onRoomJoined);
       socket.off("playerJoined", onPlayerJoined);
       socket.off("playerLeft", onPlayerLeft);
+      socket.off("disconnect", onDisconnect);
       socket.off("error", onError);
     };
   }, [roomId, username, password, isConnected, socket]);
-
-  useEffect(() => {
-    if (!isConnected) {
-      setIsJoined(false);
-    }
-  }, [isConnected]);
 
   return { players, isJoined, error, isConnected };
 }

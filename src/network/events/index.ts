@@ -51,7 +51,9 @@ export interface IncomingSignal {
 export interface ClientToServerEvents {
   createRoom: (username: string, roomName?: string, password?: string) => void;
   joinRoom: (roomId: string, username: string, password?: string) => void;
+  leaveRoom: () => void;
   signal: (data: SignalPayload) => void;
+  getRoomStatus: () => void;
 }
 
 export interface ServerToClientEvents {
@@ -60,6 +62,8 @@ export interface ServerToClientEvents {
   playerJoined: (player: Player) => void;
   playerLeft: (playerId: string) => void;
   roomInfo: (room: RoomInfo) => void;
+  hostChanged: (newHostId: string) => void;
+  roomStatus: (room: RoomInfo) => void;
   signal: (data: IncomingSignal) => void;
   error: (message: string) => void;
 }

@@ -62,5 +62,9 @@ export function useRoomOrchestrator(
     orchRef.current?.sendClear();
   }, []);
 
-  return { state, sendChat, sendStroke, sendUndo, sendClear, orchRef };
+  const leaveRoom = useCallback(() => {
+    orchRef.current?.leaveRoom();
+  }, []);
+
+  return { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom, orchRef };
 }

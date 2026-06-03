@@ -79,14 +79,26 @@ export class RoomOrchestrator {
     this.setState({ peerStatus: "idle" });
   }
 
+  private async retryWithVerification() {
+    this.peerRetryTimer = null;
+    const { isJoined, players } = this.roomManager.state;
+    if (this.peerManager || !isJoined || players.length < 2) return;
+
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+    const statusPromise = this.roomManager.requestRoomStatus();
+    await Promise.race([statusPromise, timeout]);
+
+    const { isJoined: stillJoined, players: currentPlayers } = this.roomManager.state;
+    if (this.peerManager || !stillJoined || currentPlayers.length < 2) return;
+
+    this.initiatePeer();
+  }
+
   private schedulePeerRetry() {
     if (this.peerRetryTimer) return;
 
     this.peerRetryTimer = setTimeout(() => {
-      this.peerRetryTimer = null;
-      const { isJoined, players } = this.roomManager.state;
-      if (this.peerManager || !isJoined || players.length < 2) return;
-      this.initiatePeer();
+      this.retryWithVerification();
     }, 1000);
   }
 
@@ -99,6 +111,7 @@ export class RoomOrchestrator {
     );
 
     this.socket.on("signal", this.onIncomingSignal);
+    this.socket.on("hostChanged", this.onHostChanged);
 
     this.roomManager.join(roomId, username, password);
   }
@@ -286,9 +299,29 @@ export class RoomOrchestrator {
     this.peerManager.handleSignal(data.signal);
   };
 
+  private onHostChanged = (newHostId: string) => {
+    const oldHostId = this._state.hostId;
+    this.setState({ hostId: newHostId });
+
+    if (oldHostId === newHostId || !oldHostId) return;
+
+    const hasPeerOrRetry = this.peerManager !== null || this.peerRetryTimer !== null;
+    if (!hasPeerOrRetry) return;
+
+    this.clearPeerRetryTimer();
+    this.resetPeerChannel();
+  };
+
   private teardownPeer() {
     this.clearPeerRetryTimer();
     this.resetPeerChannel();
+  }
+
+  leaveRoom() {
+    this.clearPeerRetryTimer();
+    this.resetPeerChannel();
+    this.roomManager.leave();
+    this.socket.off("hostChanged", this.onHostChanged);
   }
 
   sendChat(text: string) {
@@ -327,6 +360,7 @@ export class RoomOrchestrator {
 
   destroy() {
     this.socket.off("signal", this.onIncomingSignal);
+    this.socket.off("hostChanged", this.onHostChanged);
     this.clearPeerRetryTimer();
     this.unsubStrokeData?.();
     this.unsubStrokeData = null;
