@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { HeroTitle } from "@/landing/components/atoms/HeroTitle";
 import { UsernameBadge } from "@/landing/components/atoms/UsernameBadge";
 import { ActionCards } from "@/landing/components/molecules/ActionCards";
+import { Icon } from "@/shared/icons";
 import { useLanding } from "@/landing/hooks/useLanding";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
@@ -11,6 +13,7 @@ import { NamePrompt } from "@/shared/components/NamePrompt";
 export function LandingHero() {
   const { username, setUsername } = useUsername();
   const { createRoom, joinRoom, error, isLoading } = useLanding();
+  const router = useRouter();
   const [showNamePrompt, setShowNamePrompt] = useState(false);
 
   return (
@@ -38,6 +41,23 @@ export function LandingHero() {
           onJoinRoom={joinRoom}
           isLoading={isLoading}
         />
+      </div>
+
+      <div className="relative mt-4 w-full max-w-xl">
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">o</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/draw")}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/[0.06]"
+        >
+          <Icon name="brush" className="h-4 w-4 text-cyan-400" />
+          <span>Dibujo libre</span>
+        </button>
       </div>
 
       <footer className="relative mt-8 max-w-md text-center">
