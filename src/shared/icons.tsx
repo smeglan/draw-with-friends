@@ -26,7 +26,9 @@ export type IconName =
   | "copy"
   | "share"
   | "arrowLeft"
-  | "crown";
+  | "crown"
+  | "combine"
+  | "check";
 
 type IconProps = {
   name: IconName;
@@ -218,6 +220,17 @@ const ICON_MAP: Record<IconName, (props: { className?: string }) => React.ReactN
       <circle cx="6.5" cy="7.5" r="1.5" />
       <circle cx="12" cy="5" r="1.5" />
       <circle cx="17.5" cy="7.5" r="1.5" />
+    </IconSvg>
+  ),
+  combine: () => (
+    <IconSvg className="h-3.5 w-3.5">
+      <rect x="4" y="4" width="16" height="9" rx="1.5" opacity="0.35" />
+      <rect x="4" y="9" width="16" height="9" rx="1.5" />
+    </IconSvg>
+  ),
+  check: () => (
+    <IconSvg className="h-3.5 w-3.5">
+      <polyline points="4 12 9 17 20 6" />
     </IconSvg>
   ),
 };

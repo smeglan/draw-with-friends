@@ -49,6 +49,12 @@ export default function DrawingBoard() {
     redoCount,
     layers,
     activeLayerId,
+    selectedLayerIds,
+    isLayerWarning,
+    toggleLayerSelection,
+    clearLayerSelection,
+    mergeSelected,
+    deleteSelected,
     addLayer,
     removeLayer,
     toggleLayerVisibility,
@@ -134,11 +140,17 @@ export default function DrawingBoard() {
         <LayerPanel
           layers={layers}
           activeLayerId={activeLayerId}
+          selectedLayerIds={selectedLayerIds}
+          isLayerWarning={isLayerWarning}
           onSetActiveLayer={setActiveLayer}
           onToggleVisibility={toggleLayerVisibility}
           onAddLayer={addLayer}
           onRemoveLayer={removeLayer}
           onReorderLayer={reorderLayer}
+          onToggleLayerSelection={toggleLayerSelection}
+          onClearLayerSelection={clearLayerSelection}
+          onMergeSelected={mergeSelected}
+          onDeleteSelected={deleteSelected}
         />
       </div>
     </div>
