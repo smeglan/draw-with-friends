@@ -119,6 +119,16 @@ export function useCanvasPalettes({ brushColor, setBrushColor }: PaletteDeps) {
         next[idx] = color;
         return next;
       });
+    } else {
+      const emptyIdx = customColors.findIndex((c) => c === null);
+      if (emptyIdx === -1) return;
+      selectedSlotIndexRef.current = emptyIdx;
+      setSelectedSlotIndex(emptyIdx);
+      setCustomColors((prev) => {
+        const next = [...prev];
+        next[emptyIdx] = color;
+        return next;
+      });
     }
   };
 

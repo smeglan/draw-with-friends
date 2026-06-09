@@ -8,10 +8,10 @@
 - Mejora de capaz -- ok --
 
 ### No tan importante
-- La funcion de zoom con 2 dedos
+- La funcion de zoom con 2 dedos -- ok --
 
 ### Opcional
-- Historial de colores
+- Historial de colores -- ok --
 
 
 

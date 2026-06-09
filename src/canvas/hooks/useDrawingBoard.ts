@@ -8,6 +8,8 @@ import type { CanvasAction, CanvasDimensions, Layer, Point, Stroke } from "@/can
 import { createLayerId, isFillAction } from "@/canvas/types";
 import type { ToolContext } from "@/canvas/tools/ITool";
 import { renderStrokeSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
+import { ZOOM_LIMITS } from "@/shared/constants/drawing";
+import { clamp } from "@/shared/utils/clamp";
 
 import { useCanvasState } from "./useCanvasState";
 import { useCanvasTools } from "./useCanvasTools";
@@ -193,6 +195,10 @@ export function useDrawingBoard() {
   const rAFRef = useRef<number | null>(null);
   const latestEventDataRef = useRef<{ clientX: number; clientY: number; pointerId: number } | null>(null);
 
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const isPinchingRef = useRef(false);
+  const previousPinchDistanceRef = useRef(0);
+
   useEffect(() => {
     return () => {
       if (rAFRef.current !== null) {
@@ -201,12 +207,67 @@ export function useDrawingBoard() {
     };
   }, []);
 
+  const applyPinchZoom = useCallback(() => {
+    const pointers = Array.from(activePointersRef.current.values());
+    if (pointers.length < 2) return;
+
+    const dx = pointers[0].x - pointers[1].x;
+    const dy = pointers[0].y - pointers[1].y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 5) return;
+
+    const oldZoom = zoom.canvasZoomRef.current;
+    const zoomFactor = dist / previousPinchDistanceRef.current;
+    let newZoom = oldZoom * zoomFactor;
+    newZoom = clamp(Math.round(newZoom * 100) / 100, ZOOM_LIMITS.min, ZOOM_LIMITS.max);
+    if (newZoom === oldZoom) return;
+
+    const midX = (pointers[0].x + pointers[1].x) / 2;
+    const midY = (pointers[0].y + pointers[1].y) / 2;
+    const container = canvasAreaRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const originX = midX - rect.left;
+    const originY = midY - rect.top;
+
+    const ratio = newZoom / oldZoom;
+    const oldPan = pan.panOffsetRef.current;
+    const newPanX = oldPan.x * ratio + originX * (1 - ratio);
+    const newPanY = oldPan.y * ratio + originY * (1 - ratio);
+
+    zoom.canvasZoomRef.current = newZoom;
+    zoom.setCanvasZoom(newZoom);
+
+    window.requestAnimationFrame(() => {
+      pan.panOffsetRef.current = { x: newPanX, y: newPanY };
+      const content = innerContentRef.current;
+      if (content) {
+        content.style.transform = `translate(${newPanX}px, ${newPanY}px)`;
+      }
+    });
+
+    previousPinchDistanceRef.current = dist;
+  }, [canvasAreaRef, innerContentRef, zoom, pan]);
+
   const handlePointerDown = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     if (rAFRef.current !== null) {
       cancelAnimationFrame(rAFRef.current);
       rAFRef.current = null;
     }
     latestEventDataRef.current = null;
+
+    // Track pointer for pinch detection
+    activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (activePointersRef.current.size > 1) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      const pointers = Array.from(activePointersRef.current.values());
+      const dx = pointers[0].x - pointers[1].x;
+      const dy = pointers[0].y - pointers[1].y;
+      previousPinchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+      isPinchingRef.current = true;
+      return;
+    }
 
     const p = panRef.current;
     const t = toolsRef.current;
@@ -260,6 +321,9 @@ export function useDrawingBoard() {
   }, []);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    // Track pointer position for pinch detection
+    activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
     latestEventDataRef.current = {
       clientX: event.clientX,
       clientY: event.clientY,
@@ -272,6 +336,11 @@ export function useDrawingBoard() {
       rAFRef.current = null;
       const data = latestEventDataRef.current;
       if (!data) return;
+
+      if (isPinchingRef.current && activePointersRef.current.size >= 2) {
+        applyPinchZoom();
+        return;
+      }
 
       const p = panRef.current;
       const t = toolsRef.current;
@@ -300,7 +369,7 @@ export function useDrawingBoard() {
         h.setStrokesCount(h.actionsRef.current.length);
       }
     });
-  }, []);
+  }, [applyPinchZoom]);
 
   const handlePointerUp = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     if (rAFRef.current !== null) {
@@ -308,6 +377,12 @@ export function useDrawingBoard() {
       rAFRef.current = null;
     }
     latestEventDataRef.current = null;
+
+    activePointersRef.current.delete(event.pointerId);
+
+    if (isPinchingRef.current && activePointersRef.current.size < 2) {
+      isPinchingRef.current = false;
+    }
 
     const p = panRef.current;
     const t = toolsRef.current;

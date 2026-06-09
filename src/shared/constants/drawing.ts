@@ -19,7 +19,7 @@ export const BUCKET_LIMITS = {
 } as const;
 
 export const QUICK_COLORS = [
-  "#111827",
+  "#000000",
   "#ef4444",
   "#f59e0b",
   "#22c55e",

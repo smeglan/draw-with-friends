@@ -13,6 +13,7 @@ type ColorSectionProps = {
 
 export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: ColorSectionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const firstWheelClick = useRef(true);
 
   useEffect(() => {
     if (inputRef.current) inputRef.current.value = brushColor;
@@ -21,6 +22,12 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
   const hsv = hexToHsv(brushColor);
 
   const handleWheelChange = (hex: string) => {
+    if (firstWheelClick.current) {
+      firstWheelClick.current = false;
+      const { h, s } = hexToHsv(hex);
+      onWheelColorChange(hsvToHex(h, s, 100));
+      return;
+    }
     onWheelColorChange(hex);
   };
 
