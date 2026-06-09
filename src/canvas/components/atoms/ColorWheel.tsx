@@ -1,50 +1,21 @@
 "use client";
 
 import { useRef, useEffect, useCallback } from "react";
-
-const WHEEL_SIZE = 130;
+import { hsvToHex, hexToHsv } from "@/shared/utils/color";
 
 type ColorWheelProps = {
   selectedColor?: string;
   onColorChange: (color: string) => void;
+  v?: number;
+  size?: number;
 };
 
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100;
-  l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * c)
-      .toString(16)
-      .padStart(2, "0");
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
-
-function hexToHsl(hex: string): { h: number; s: number; l: number } {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!m) return { h: 0, s: 0, l: 0 };
-  const r = parseInt(m[1], 16) / 255;
-  const g = parseInt(m[2], 16) / 255;
-  const b = parseInt(m[3], 16) / 255;
-  const mx = Math.max(r, g, b);
-  const mn = Math.min(r, g, b);
-  const l = (mx + mn) / 2;
-  if (mx === mn) return { h: 0, s: 0, l: Math.round(l * 100) };
-  const d = mx - mn;
-  const s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
-  let h = 0;
-  switch (mx) {
-    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-    case g: h = ((b - r) / d + 2) / 6; break;
-    case b: h = ((r - g) / d + 4) / 6; break;
-  }
-  return { h: h * 360, s: Math.round(s * 100), l: Math.round(l * 100) };
-}
-
-export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
+export function ColorWheel({
+  selectedColor,
+  onColorChange,
+  v = 100,
+  size = 180,
+}: ColorWheelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const indicatorRef = useRef<HTMLCanvasElement>(null);
   const isDragging = useRef(false);
@@ -56,23 +27,23 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
 
     const dpr = window.devicePixelRatio || 1;
 
-    canvas.width = WHEEL_SIZE * dpr;
-    canvas.height = WHEEL_SIZE * dpr;
-    canvas.style.width = `${WHEEL_SIZE}px`;
-    canvas.style.height = `${WHEEL_SIZE}px`;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
 
-    indicator.width = WHEEL_SIZE * dpr;
-    indicator.height = WHEEL_SIZE * dpr;
-    indicator.style.width = `${WHEEL_SIZE}px`;
-    indicator.style.height = `${WHEEL_SIZE}px`;
+    indicator.width = size * dpr;
+    indicator.height = size * dpr;
+    indicator.style.width = `${size}px`;
+    indicator.style.height = `${size}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.scale(dpr, dpr);
 
-    const cx = WHEEL_SIZE / 2;
-    const cy = WHEEL_SIZE / 2;
-    const r = WHEEL_SIZE / 2 - 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size / 2 - 2;
 
     for (let i = 0; i < 360; i++) {
       const a1 = ((i - 90) * Math.PI) / 180;
@@ -92,7 +63,7 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
-  }, []);
+  }, [size]);
 
   useEffect(() => {
     const indicator = indicatorRef.current;
@@ -106,12 +77,12 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
 
     if (!selectedColor) return;
 
-    const hsl = hexToHsl(selectedColor);
-    const cx = WHEEL_SIZE / 2;
-    const cy = WHEEL_SIZE / 2;
-    const r = WHEEL_SIZE / 2 - 2;
-    const angle = ((hsl.h - 90) * Math.PI) / 180;
-    const dist = (hsl.s / 100) * r;
+    const hsv = hexToHsv(selectedColor);
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = size / 2 - 2;
+    const angle = ((hsv.h - 90) * Math.PI) / 180;
+    const dist = (hsv.s / 100) * r;
     const x = cx + dist * Math.cos(angle);
     const y = cy + dist * Math.sin(angle);
 
@@ -125,7 +96,7 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
     ctx.stroke();
-  }, [selectedColor]);
+  }, [selectedColor, size]);
 
   const colorAt = useCallback(
     (clientX: number, clientY: number): string | null => {
@@ -133,10 +104,10 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
       if (!canvas) return null;
 
       const rect = canvas.getBoundingClientRect();
-      const x = clientX - rect.left - WHEEL_SIZE / 2;
-      const y = clientY - rect.top - WHEEL_SIZE / 2;
+      const x = clientX - rect.left - size / 2;
+      const y = clientY - rect.top - size / 2;
       const dist = Math.sqrt(x * x + y * y);
-      const r = WHEEL_SIZE / 2 - 2;
+      const r = size / 2 - 2;
 
       if (dist > r) return null;
 
@@ -145,9 +116,9 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
       const hue = Math.round(angle);
       const saturation = Math.round((dist / r) * 100);
 
-      return hslToHex(hue, saturation, 50);
+      return hsvToHex(hue, saturation, v);
     },
-    [],
+    [v, size],
   );
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -167,7 +138,7 @@ export function ColorWheel({ selectedColor, onColorChange }: ColorWheelProps) {
   };
 
   return (
-    <div className="relative" style={{ width: WHEEL_SIZE, height: WHEEL_SIZE }}>
+    <div className="relative" style={{ width: size, height: size }}>
       <canvas
         ref={canvasRef}
         className="absolute inset-0 cursor-crosshair touch-none"

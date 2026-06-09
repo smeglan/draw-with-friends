@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { ColorWheel } from "@/canvas/components/atoms/ColorWheel";
+import { ColorSlider } from "@/canvas/components/atoms/ColorSlider";
+import { hsvToHex, hexToHsv } from "@/shared/utils/color";
 
 type ColorSectionProps = {
   brushColor: string;
@@ -16,20 +18,39 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
     if (inputRef.current) inputRef.current.value = brushColor;
   }, [brushColor]);
 
+  const hsv = hexToHsv(brushColor);
+
+  const handleWheelChange = (hex: string) => {
+    onWheelColorChange(hex);
+  };
+
+  const handleSatChange = (s: number) => {
+    onWheelColorChange(hsvToHex(hsv.h, s, hsv.v));
+  };
+
+  const handleValChange = (v: number) => {
+    onWheelColorChange(hsvToHex(hsv.h, hsv.s, v));
+  };
+
   const submitHex = () => {
     const input = inputRef.current;
     if (!input) return;
-    const val = input.value.trim();
-    if (/^#[0-9a-fA-F]{6}$/.test(val) && val !== brushColor) {
-      onWheelColorChange(val);
+    const raw = input.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(raw) && raw !== brushColor) {
+      onWheelColorChange(raw);
       return;
     }
     input.value = brushColor;
   };
 
+  const satFrom = hsvToHex(hsv.h, 0, hsv.v);
+  const satTo = hsvToHex(hsv.h, 100, hsv.v);
+  const valFrom = "#000000";
+  const valTo = hsvToHex(hsv.h, hsv.s, 100);
+
   return (
     <div className="w-full rounded-xl border border-white/10 bg-slate-950/35 p-3">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Colores</p>
           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-slate-300">
@@ -38,17 +59,17 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
         </div>
 
         <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-white/15">
-          <div className="min-h-10" style={{ backgroundColor: brushColor }} />
+          <div className="min-h-9" style={{ backgroundColor: brushColor }} />
           <button
             type="button"
-            className="min-h-10 border-l border-white/15 transition hover:brightness-110"
+            className="min-h-9 border-l border-white/15 transition hover:brightness-110"
             style={{ backgroundColor: "#000000" }}
             onClick={() => onColorSelect("#000000")}
             aria-label="Negro"
           />
           <button
             type="button"
-            className="min-h-10 border-l border-white/15 transition hover:brightness-110"
+            className="min-h-9 border-l border-white/15 transition hover:brightness-110"
             style={{ backgroundColor: "#ffffff" }}
             onClick={() => onColorSelect("#ffffff")}
             aria-label="Blanco"
@@ -70,9 +91,32 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
           placeholder="#000000"
         />
 
-        <div className="flex w-full justify-center rounded-xl border border-white/10 bg-white/[0.03] py-2">
-          <ColorWheel selectedColor={brushColor} onColorChange={onWheelColorChange} />
+        <div className="flex w-full justify-center">
+          <ColorWheel
+            selectedColor={brushColor}
+            onColorChange={handleWheelChange}
+            v={hsv.v}
+            size={180}
+          />
         </div>
+
+        <ColorSlider
+          label="S"
+          labelTooltip="Saturación"
+          value={hsv.s}
+          gradientFrom={satFrom}
+          gradientTo={satTo}
+          onChange={handleSatChange}
+        />
+
+        <ColorSlider
+          label="V"
+          labelTooltip="Brillo"
+          value={hsv.v}
+          gradientFrom={valFrom}
+          gradientTo={valTo}
+          onChange={handleValChange}
+        />
       </div>
     </div>
   );

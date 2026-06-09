@@ -1,10 +1,10 @@
 ## Mejoras canvas
 
 ### Urgente
-- El lapiz se laguea con lineas largas
-- Tomar color, necesita oscuro y claro, contraste
+- El lapiz se laguea con lineas largas -- ok --
+- Tomar color, necesita oscuro y claro, contraste -- ok --
 - Limite de capaz
-- Circulo mas grande
+- Circulo mas grande -- ok --
 
 ### No tan importante
 - La funcion de zoom con 2 dedos
