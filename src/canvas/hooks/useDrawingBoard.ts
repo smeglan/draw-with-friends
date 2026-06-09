@@ -7,7 +7,7 @@ import { useElementSize } from "@/shared/hooks/useElementSize";
 import type { CanvasAction, CanvasDimensions, Layer, Point, Stroke } from "@/canvas/types";
 import { createLayerId, isFillAction } from "@/canvas/types";
 import type { ToolContext } from "@/canvas/tools/ITool";
-import { renderStroke, renderStrokeSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
+import { renderStrokeSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
 
 import { useCanvasState } from "./useCanvasState";
 import { useCanvasTools } from "./useCanvasTools";
@@ -50,9 +50,6 @@ function scaleCanvasActions(
 }
 
 const DEFAULT_LAYERS: Layer[] = [{ id: createLayerId(), name: "Capa 1", visible: true }];
-
-const strokeBaseSnapshotRef = { current: null as HTMLCanvasElement | null };
-const currentStrokePointsRef = { current: [] as Point[] };
 
 export function useDrawingBoard() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -152,35 +149,6 @@ export function useDrawingBoard() {
     };
   };
 
-  const renderFullCurrentStroke = (
-    strokeProps: Pick<Stroke, "tool" | "color" | "size" | "opacity">,
-  ) => {
-    const s = stateRef.current;
-    const canvas = s.canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const snapshot = strokeBaseSnapshotRef.current;
-    if (!snapshot) return;
-    const points = currentStrokePointsRef.current;
-    if (points.length === 0) return;
-
-    const scale = s.canvasScaleRef.current;
-    const fullStroke: Stroke = {
-      type: "stroke",
-      tool: strokeProps.tool,
-      color: strokeProps.color,
-      size: strokeProps.size,
-      points,
-      layerId: activeLayerIdRef.current,
-      opacity: strokeProps.opacity,
-    };
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(snapshot, 0, 0);
-    renderStroke(ctx, fullStroke, scale);
-  };
-
   const getToolContext = (): ToolContext => {
     const s = stateRef.current;
     const t = toolsRef.current;
@@ -199,30 +167,24 @@ export function useDrawingBoard() {
       setActiveTool: t.setActiveTool,
       redrawCanvas: s.redrawCanvas,
       renderStrokeSegment: (from: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
-        if (stroke.tool === "eraser") {
-          const canvas = s.canvasRef.current;
-          if (!canvas) return;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          const guide = { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 };
-          renderStrokeSegment(ctx, from, to, guide, s.canvasScaleRef.current);
-        } else {
-          currentStrokePointsRef.current.push(to);
-          renderFullCurrentStroke(stroke);
-        }
+        const canvas = s.canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const p = stroke.tool === "eraser"
+          ? { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 }
+          : stroke;
+        renderStrokeSegment(ctx, from, to, p, s.canvasScaleRef.current);
       },
       renderStrokeDot: (point: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
-        if (stroke.tool === "eraser") {
-          const canvas = s.canvasRef.current;
-          if (!canvas) return;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          const guide = { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 };
-          renderStrokeDot(ctx, point, guide, s.canvasScaleRef.current);
-        } else {
-          currentStrokePointsRef.current = [point];
-          renderFullCurrentStroke(stroke);
-        }
+        const canvas = s.canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const p = stroke.tool === "eraser"
+          ? { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 }
+          : stroke;
+        renderStrokeDot(ctx, point, p, s.canvasScaleRef.current);
       },
       activeLayerId: activeLayerIdRef.current,
     };
@@ -236,8 +198,6 @@ export function useDrawingBoard() {
       if (rAFRef.current !== null) {
         cancelAnimationFrame(rAFRef.current);
       }
-      strokeBaseSnapshotRef.current = null;
-      currentStrokePointsRef.current = [];
     };
   }, []);
 
@@ -274,19 +234,6 @@ export function useDrawingBoard() {
 
     if (t.activeTool === "brush" || t.activeTool === "eraser") {
       event.currentTarget.setPointerCapture(event.pointerId);
-
-      const cvs = stateRef.current.canvasRef.current;
-      if (cvs) {
-        const snap = document.createElement("canvas");
-        snap.width = cvs.width;
-        snap.height = cvs.height;
-        const snapCtx = snap.getContext("2d");
-        if (snapCtx) {
-          snapCtx.drawImage(cvs, 0, 0);
-        }
-        strokeBaseSnapshotRef.current = snap;
-      }
-      currentStrokePointsRef.current = [];
     }
 
     const before = h.actionsRef.current.length;
@@ -372,8 +319,6 @@ export function useDrawingBoard() {
 
     if (p.isPanningRef.current && p.panStateRef.current.pointerId === event.pointerId) {
       p.endPan();
-      strokeBaseSnapshotRef.current = null;
-      currentStrokePointsRef.current = [];
       return;
     }
 
@@ -395,9 +340,6 @@ export function useDrawingBoard() {
       );
       h.setStrokesCount(h.actionsRef.current.length);
     }
-
-    strokeBaseSnapshotRef.current = null;
-    currentStrokePointsRef.current = [];
   }, []);
 
   return {
