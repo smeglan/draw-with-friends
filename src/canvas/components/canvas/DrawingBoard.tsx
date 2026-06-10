@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { DrawingCanvas } from "@/canvas/components/canvas/DrawingCanvas";
 import { CanvasToolbar } from "@/canvas/components/molecules/CanvasToolbar";
@@ -12,6 +13,7 @@ import { useDrawingBoard } from "@/canvas/hooks/useDrawingBoard";
 
 export default function DrawingBoard() {
   const drawingBoard = useDrawingBoard();
+  const t = useTranslations();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 1023px)");
@@ -76,21 +78,21 @@ export default function DrawingBoard() {
 
   const restoreBanner = hasAutosave && (
     <div className="flex items-center justify-between gap-3 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm">
-      <span className="text-amber-200">Tienes un proyecto sin guardar</span>
+      <span className="text-amber-200">{t("canvas.restoreBanner")}</span>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={restoreAutosave}
           className="rounded-lg bg-amber-600 px-3 py-1 text-white transition hover:bg-amber-500"
         >
-          Restaurar
+          {t("canvas.restore")}
         </button>
         <button
           type="button"
           onClick={clearAutosave}
           className="rounded-lg border border-white/20 px-3 py-1 text-slate-300 transition hover:bg-white/10"
         >
-          Descartar
+          {t("canvas.discard")}
         </button>
       </div>
     </div>
@@ -99,8 +101,6 @@ export default function DrawingBoard() {
   if (!mounted) {
     return (
       <div className="flex h-[100dvh] flex-col overflow-hidden bg-transparent">
-        {restoreBanner}
-
         <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/95 px-3 backdrop-blur-lg" />
 
         <DrawingCanvas
@@ -231,8 +231,8 @@ export default function DrawingBoard() {
         type="button"
         onClick={() => setMobileSidebarOpen(true)}
         className="fixed left-3 top-3 z-30 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-black/70 text-slate-200 shadow-lg backdrop-blur-md transition hover:border-cyan-300/40 hover:bg-cyan-300/15 hover:text-white lg:hidden"
-        aria-label="Abrir menu"
-        title="Abrir menu"
+        aria-label={t("canvas.openMenu")}
+        title={t("canvas.openMenu")}
       >
         <Icon name="menu" className="h-4 w-4" />
       </button>

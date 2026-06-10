@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { ColorWheel } from "@/canvas/components/atoms/ColorWheel";
 import { ColorSlider } from "@/canvas/components/atoms/ColorSlider";
 import { hsvToHex, hexToHsv } from "@/shared/utils/color";
@@ -12,6 +13,7 @@ type ColorSectionProps = {
 };
 
 export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: ColorSectionProps) {
+  const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const firstWheelClick = useRef(true);
 
@@ -59,7 +61,7 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
     <div className="w-full rounded-xl border border-white/10 bg-slate-950/35 p-3">
       <div className="flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Colores</p>
+          <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">{t("colors.heading")}</p>
           <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-slate-300">
             {brushColor}
           </span>
@@ -72,14 +74,14 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
             className="min-h-9 border-l border-white/15 transition hover:brightness-110"
             style={{ backgroundColor: "#000000" }}
             onClick={() => onColorSelect("#000000")}
-            aria-label="Negro"
+            aria-label={t("colors.black")}
           />
           <button
             type="button"
             className="min-h-9 border-l border-white/15 transition hover:brightness-110"
             style={{ backgroundColor: "#ffffff" }}
             onClick={() => onColorSelect("#ffffff")}
-            aria-label="Blanco"
+            aria-label={t("colors.white")}
           />
         </div>
 
@@ -109,7 +111,7 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
 
         <ColorSlider
           label="S"
-          labelTooltip="Saturación"
+          labelTooltip={t("colors.saturation")}
           value={hsv.s}
           gradientFrom={satFrom}
           gradientTo={satTo}
@@ -118,7 +120,7 @@ export function ColorSection({ brushColor, onColorSelect, onWheelColorChange }: 
 
         <ColorSlider
           label="V"
-          labelTooltip="Brillo"
+          labelTooltip={t("colors.brightness")}
           value={hsv.v}
           gradientFrom={valFrom}
           gradientTo={valTo}

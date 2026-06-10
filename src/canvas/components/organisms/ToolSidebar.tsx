@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ColorSection } from "@/canvas/components/molecules/ColorSection";
 import { PaletteSection } from "@/canvas/components/molecules/PaletteSection";
 import { ToolsSection } from "@/canvas/components/molecules/ToolsSection";
@@ -51,12 +52,13 @@ export function ToolSidebar({
   isMobileOpen,
   onCloseMobile,
 }: ToolSidebarProps) {
+  const t = useTranslations();
   return (
     <>
       <button
         type="button"
         onClick={onCloseMobile}
-        aria-label="Cerrar menu"
+        aria-label={t("canvas.closeMenu")}
         className={[
           "fixed inset-0 z-30 bg-black/40 backdrop-blur-[1px] transition-opacity lg:hidden",
           isMobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
@@ -72,14 +74,14 @@ export function ToolSidebar({
         <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 lg:hidden">
           <div className="flex items-center gap-2">
             <Icon name="menu" className="h-4 w-4 text-slate-300" />
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-300">Menu</span>
+            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-300">{t("canvas.menu")}</span>
           </div>
           <button
             type="button"
             onClick={onCloseMobile}
             className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
-            aria-label="Cerrar menu"
-            title="Cerrar menu"
+            aria-label={t("canvas.closeMenu")}
+            title={t("canvas.closeMenu")}
           >
             <Icon name="chevronDown" className="h-3.5 w-3.5 rotate-180" />
           </button>

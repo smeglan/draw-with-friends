@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import type { DrawingTool } from "@/canvas/types";
 
@@ -33,6 +34,7 @@ export function MobileBottomBar({
   onRedo,
   onOpenSidebar,
 }: MobileBottomBarProps) {
+  const t = useTranslations();
   const isFullscreen = useSyncExternalStore(
     (cb) => {
       document.addEventListener("fullscreenchange", cb);
@@ -76,7 +78,7 @@ export function MobileBottomBar({
         onClick={onOpenSidebar}
         className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 transition hover:border-white/20"
         style={{ backgroundColor: brushColor }}
-        aria-label="Color"
+        aria-label={t("colors.heading")}
       />
 
       <button
@@ -84,7 +86,7 @@ export function MobileBottomBar({
         onClick={onUndo}
         disabled={strokesCount === 0}
         className={`${iconBtn} border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/10 hover:text-white`}
-        aria-label="Deshacer"
+        aria-label={t("common.undo")}
       >
         <Icon name="undo" className="h-5 w-5" />
       </button>
@@ -94,7 +96,7 @@ export function MobileBottomBar({
         onClick={onRedo}
         disabled={redoCount === 0}
         className={`${iconBtn} border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/10 hover:text-white`}
-        aria-label="Rehacer"
+        aria-label={t("common.redo")}
       >
         <Icon name="redo" className="h-5 w-5" />
       </button>
@@ -103,7 +105,7 @@ export function MobileBottomBar({
         type="button"
         onClick={toggleFullscreen}
         className={`${iconBtn} border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:bg-white/10 hover:text-white`}
-        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        aria-label={isFullscreen ? t("common.exitFullscreen") : t("common.fullscreen")}
       >
         <Icon name={isFullscreen ? "fullscreenExit" : "fullscreen"} className="h-5 w-5" />
       </button>

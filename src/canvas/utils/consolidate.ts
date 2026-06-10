@@ -28,7 +28,16 @@ export function consolidateActions(
       // Draw the consolidated actions onto this canvas
       for (const action of toConsolidate) {
         if (action.type === "raster") {
-          ctx.putImageData(action.imageData, 0, 0);
+          if (action.imageData instanceof ImageData) {
+            ctx.putImageData(action.imageData, 0, 0);
+          } else {
+            const { data, width, height } = action.imageData as unknown as {
+              data: number[];
+              width: number;
+              height: number;
+            };
+            ctx.putImageData(new ImageData(new Uint8ClampedArray(data), width, height), 0, 0);
+          }
         } else if (action.type === "fill") {
           const imageData = ctx.getImageData(0, 0, width, height);
           applyFillToImageData(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import type { ShapeType } from "@/canvas/types";
 
 type ShapeMenuProps = {
@@ -10,13 +11,6 @@ type ShapeMenuProps = {
   onSelect: (shape: ShapeType) => void;
   onClose: () => void;
 };
-
-const SHAPES: { id: ShapeType; label: string }[] = [
-  { id: "rectangle", label: "Rectangulo" },
-  { id: "ellipse", label: "Elipse" },
-  { id: "triangle", label: "Triangulo" },
-  { id: "line", label: "Linea" },
-];
 
 function ShapeIcon({ shape }: { shape: ShapeType }) {
   return (
@@ -30,7 +24,15 @@ function ShapeIcon({ shape }: { shape: ShapeType }) {
 }
 
 export function ShapeMenu({ open, anchorEl, selectedShape, onSelect, onClose }: ShapeMenuProps) {
+  const t = useTranslations();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const SHAPES: { id: ShapeType; label: string }[] = [
+    { id: "rectangle", label: t("tools.rectangle") },
+    { id: "ellipse", label: t("tools.ellipse") },
+    { id: "triangle", label: t("tools.triangle") },
+    { id: "line", label: t("tools.line") },
+  ];
 
   useEffect(() => {
     if (!open) return;

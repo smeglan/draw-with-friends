@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RefObject } from "react";
+import { useTranslations } from "next-intl";
 
 import type { CanvasDimensions, CanvasSizePreset } from "@/canvas/types";
 import { Icon } from "@/shared/icons";
@@ -63,6 +64,7 @@ export function ExportDrawer({
   onSaveProject,
   onOpenProject,
 }: ExportDrawerProps) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [draftWidth, setDraftWidth] = useState(canvasSize.width.toString());
   const [draftHeight, setDraftHeight] = useState(canvasSize.height.toString());
@@ -118,8 +120,8 @@ export function ExportDrawer({
             : "border-white/10 bg-white/10 text-slate-200 hover:border-white/20 hover:bg-white/15 hover:text-white",
         ].join(" ")}
         aria-expanded={open}
-        aria-label="Abrir lienzo"
-        title="Lienzo"
+        aria-label={t("canvas.openMenu")}
+        title={t("canvas.canvasTitle")}
       >
         <Icon name="menu" className="h-4 w-4" />
       </button>
@@ -130,23 +132,23 @@ export function ExportDrawer({
         }`}
       >
         <div className="border-b border-white/10 px-4 py-3">
-          <p className="text-sm font-medium text-white">Lienzo</p>
-          <p className="text-xs text-slate-400">Resoluciones y exportacion</p>
+          <p className="text-sm font-medium text-white">{t("canvas.canvasTitle")}</p>
+          <p className="text-xs text-slate-400">{t("canvas.canvasDescription")}</p>
         </div>
 
         <div className="flex flex-col gap-4 p-3">
           <section className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">Tamano</p>
-                <p className="text-xs text-slate-500">Presets comunes o un tamano propio.</p>
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">{t("canvas.size")}</p>
+                <p className="text-xs text-slate-500">{t("canvas.sizePresetsDesktop")}</p>
               </div>
               <button
                 type="button"
                 onClick={onFitToScreen}
                 className="shrink-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 hover:text-white"
               >
-                Fit
+                {t("common.fit")}
               </button>
             </div>
 
@@ -178,7 +180,7 @@ export function ExportDrawer({
 
             <div className="flex flex-wrap items-end gap-2">
               <label className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Ancho</span>
+                <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">{t("canvas.width")}</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -191,7 +193,7 @@ export function ExportDrawer({
               </label>
 
               <label className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">Alto</span>
+                <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">{t("canvas.height")}</span>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -208,15 +210,15 @@ export function ExportDrawer({
                 onClick={applyCustomSize}
                 className="h-10 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-medium text-cyan-100 transition hover:border-cyan-300/30 hover:bg-cyan-300/15"
               >
-                Aplicar
+                {t("common.apply")}
               </button>
             </div>
           </section>
 
           <section className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3">
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">Exportar</p>
-              <p className="text-xs text-slate-500">PNG, JPEG y WEBP.</p>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">{t("canvas.exportSection")}</p>
+              <p className="text-xs text-slate-500">{t("canvas.exportDescriptionDesktop")}</p>
             </div>
 
             {EXPORT_FORMATS.map((format) => (
@@ -229,9 +231,9 @@ export function ExportDrawer({
                 <div>
                   <p className="text-sm font-medium text-white">{format.label}</p>
                   <p className="text-xs text-slate-400">
-                    {format.id === "png" && "Ideal para transparencia y calidad"}
-                    {format.id === "jpeg" && "Ligero para compartir"}
-                    {format.id === "webp" && "Buen balance entre peso y calidad"}
+                    {format.id === "png" && t("export.pngDescription")}
+                    {format.id === "jpeg" && t("export.jpegDescription")}
+                    {format.id === "webp" && t("export.webpDescription")}
                   </p>
                 </div>
                 <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300">
@@ -244,8 +246,8 @@ export function ExportDrawer({
           {(onSaveProject || onOpenProject) && (
             <section className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">Proyecto</p>
-                <p className="text-xs text-slate-500">Guardar o abrir .dibujo</p>
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">{t("canvas.projectSection")}</p>
+                <p className="text-xs text-slate-500">{t("canvas.projectDescription")}</p>
               </div>
 
               {onSaveProject && (
@@ -255,8 +257,8 @@ export function ExportDrawer({
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/10"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">Guardar proyecto</p>
-                    <p className="text-xs text-slate-400">Exportar como .dibujo</p>
+                    <p className="text-sm font-medium text-white">{t("canvas.projectSave")}</p>
+                    <p className="text-xs text-slate-400">{t("canvas.projectSaveDescription")}</p>
                   </div>
                     <Icon name="save" className="h-4 w-4 text-slate-400" />
                 </button>
@@ -269,8 +271,8 @@ export function ExportDrawer({
                   className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/10"
                 >
                   <div>
-                    <p className="text-sm font-medium text-white">Abrir proyecto</p>
-                    <p className="text-xs text-slate-400">Cargar archivo .dibujo</p>
+                    <p className="text-sm font-medium text-white">{t("canvas.projectOpen")}</p>
+                    <p className="text-xs text-slate-400">{t("canvas.projectOpenDescription")}</p>
                   </div>
                   <Icon name="import" className="h-4 w-4 text-slate-400" />
                 </button>

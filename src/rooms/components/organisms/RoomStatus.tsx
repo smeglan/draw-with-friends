@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { Player } from "@/network/events";
 import { PlayerList } from "@/rooms/components/molecules/PlayerList";
 import { ErrorBanner } from "@/rooms/components/molecules/ErrorBanner";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function RoomStatus({ players, hostId, isJoined, error, isConnected, peerStatus, roomId }: Props) {
+  const t = useTranslations();
   const playerCount = players.length;
   const canPlay = playerCount >= 2;
 
@@ -25,8 +27,8 @@ export function RoomStatus({ players, hostId, isJoined, error, isConnected, peer
 
       {!isConnected && (
         <div className="text-center">
-          <p className="mb-2 text-lg text-slate-400">Desconectado</p>
-          <p className="text-sm text-slate-500">Esperando reconexión...</p>
+          <p className="mb-2 text-lg text-slate-400">{t("room.disconnected")}</p>
+          <p className="text-sm text-slate-500">{t("room.reconnecting")}</p>
           <div className="mx-auto mt-3 h-6 w-6 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-400" />
         </div>
       )}
@@ -34,7 +36,7 @@ export function RoomStatus({ players, hostId, isJoined, error, isConnected, peer
       {isConnected && !isJoined && !error && (
         <div className="text-center">
           <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-400" />
-          <p className="text-sm text-slate-400">Uniéndose a la sala...</p>
+          <p className="text-sm text-slate-400">{t("room.joining")}</p>
         </div>
       )}
 
@@ -42,24 +44,23 @@ export function RoomStatus({ players, hostId, isJoined, error, isConnected, peer
         <>
           <div className="text-center">
             <p className="mb-1 text-lg text-slate-300">
-              {canPlay ? "¡Listo para jugar!" : "Esperando jugadores..."}
+              {canPlay ? t("room.readyToPlay") : t("room.waitingPlayers")}
             </p>
             <p className="text-sm text-slate-500">
-              {playerCount} jugador{playerCount !== 1 ? "es" : ""} conectado
-              {playerCount !== 1 ? "s" : ""}
-              {!canPlay && " (mínimo 2)"}
+              {t("room.playerCount", { count: playerCount })}
+              {!canPlay && t("room.minPlayers")}
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              {peerStatus === "idle" && "Esperando conexión P2P..."}
-              {peerStatus === "connecting" && "Estableciendo conexión P2P..."}
+              {peerStatus === "idle" && t("room.waitingP2P")}
+              {peerStatus === "connecting" && t("room.connectingP2P")}
               {peerStatus === "connected" && (
-                <span className="text-green-400">Conexión P2P establecida</span>
+                <span className="text-green-400">{t("room.p2pEstablished")}</span>
               )}
               {peerStatus === "disconnected" && (
-                <span className="text-red-400">Conexión P2P perdida</span>
+                <span className="text-red-400">{t("room.p2pLost")}</span>
               )}
               {peerStatus === "error" && (
-                <span className="text-red-400">Error en conexión P2P</span>
+                <span className="text-red-400">{t("room.p2pError")}</span>
               )}
             </p>
           </div>
@@ -71,7 +72,7 @@ export function RoomStatus({ players, hostId, isJoined, error, isConnected, peer
               href={`/draw?room=${roomId}`}
               className="rounded-xl bg-cyan-500 px-6 py-3 font-medium text-white transition hover:bg-cyan-400"
             >
-              Ir al tablero
+              {t("room.goToBoard")}
             </Link>
           )}
         </>

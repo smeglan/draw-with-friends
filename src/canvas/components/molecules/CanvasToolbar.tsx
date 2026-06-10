@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { ConfirmLeaveModal } from "@/shared/components/ConfirmLeaveModal";
 import { ZOOM_LIMITS } from "@/shared/constants/drawing";
@@ -67,6 +68,7 @@ export function CanvasToolbar({
   const [showLeftMenu, setShowLeftMenu] = useState(false);
   const [showToolSettings, setShowToolSettings] = useState(false);
   const router = useRouter();
+  const t = useTranslations();
 
   const isFullscreen = useSyncExternalStore(
     (cb) => {
@@ -98,7 +100,7 @@ export function CanvasToolbar({
             type="button"
             onClick={() => setShowLeftMenu(true)}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
-            aria-label="Menu"
+            aria-label={t("canvas.menu")}
           >
             <Icon name="menu" className="h-4 w-4" />
           </button>
@@ -112,7 +114,7 @@ export function CanvasToolbar({
               type="button"
               onClick={onOpenLayers}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
-              aria-label="Capas"
+              aria-label={t("canvas.layers")}
             >
               <Icon name="layers" className="h-4 w-4" />
             </button>
@@ -121,7 +123,7 @@ export function CanvasToolbar({
                 type="button"
                 onClick={() => setShowToolSettings(true)}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
-                aria-label={`Ajustes de ${activeTool}`}
+                aria-label={t("canvas.toolSettings", { tool: t("tools." + activeTool) })}
               >
                 <Icon name={activeTool as "brush" | "bucket" | "eraser"} className="h-4 w-4" />
               </button>
@@ -163,8 +165,8 @@ export function CanvasToolbar({
           type="button"
           onClick={() => setShowLeaveModal(true)}
           className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-slate-200 transition hover:border-white/20 hover:bg-white/15 hover:text-white"
-          aria-label="Volver al inicio"
-          title="Volver al inicio"
+          aria-label={t("common.backToHome")}
+          title={t("common.backToHome")}
         >
           <Icon name="home" />
         </button>
@@ -204,7 +206,7 @@ export function CanvasToolbar({
 
       <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-[0.08em] text-slate-400">Zoom</span>
+          <span className="text-[10px] uppercase tracking-[0.08em] text-slate-400">{t("canvas.zoom")}</span>
           <span className="text-xs text-white/80">{Math.round(canvasZoom * 100)}%</span>
         </div>
         <input
@@ -215,7 +217,7 @@ export function CanvasToolbar({
           value={canvasZoom}
           onChange={(e) => onCanvasZoomChange(Number(e.target.value))}
           className="h-2 w-40 accent-cyan-300"
-          aria-label="Zoom del lienzo"
+          aria-label={t("canvas.zoomLabel")}
         />
       </div>
 
@@ -223,11 +225,11 @@ export function CanvasToolbar({
         type="button"
         onClick={toggleFullscreen}
         className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-black/20 px-3 text-sm font-medium text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 hover:text-white"
-        aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-        title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+        aria-label={isFullscreen ? t("common.exitFullscreen") : t("common.fullscreen")}
+        title={isFullscreen ? t("common.exitFullscreen") : t("common.fullscreen")}
       >
         <Icon name={isFullscreen ? "fullscreenExit" : "fullscreen"} />
-        <span className="hidden sm:inline">{isFullscreen ? "Salir" : "Fullscreen"}</span>
+        <span className="hidden sm:inline">{isFullscreen ? t("common.exit") : t("common.fullscreen")}</span>
       </button>
 
       <div className="flex shrink-0 justify-center gap-2 lg:justify-start">
@@ -236,8 +238,8 @@ export function CanvasToolbar({
           onClick={onUndo}
           suppressHydrationWarning disabled={strokesCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
-          aria-label="Deshacer"
-          title="Deshacer"
+          aria-label={t("common.undo")}
+          title={t("common.undo")}
         >
           <Icon name="undo" />
         </button>
@@ -246,8 +248,8 @@ export function CanvasToolbar({
           onClick={onRedo}
           suppressHydrationWarning disabled={redoCount === 0}
           className={`${iconBtn} border-white/10 bg-white/10 text-slate-300 hover:border-white/20 hover:bg-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-35`}
-          aria-label="Rehacer"
-          title="Rehacer"
+          aria-label={t("common.redo")}
+          title={t("common.redo")}
         >
           <Icon name="redo" />
         </button>

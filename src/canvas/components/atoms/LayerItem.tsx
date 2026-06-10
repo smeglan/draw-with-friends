@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import type { Layer } from "@/canvas/types";
 
@@ -22,6 +23,7 @@ export function LayerItem({
   onToggleVisibility,
   onReorder,
 }: LayerItemProps) {
+  const t = useTranslations();
   return (
     <div
       className={`group flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs transition-all ${
@@ -44,7 +46,7 @@ export function LayerItem({
             ? "text-slate-400 hover:text-white"
             : "text-slate-600 hover:text-slate-400"
         }`}
-        title={layer.visible ? "Ocultar capa" : "Mostrar capa"}
+        title={layer.visible ? t("layers.hideLayer") : t("layers.showLayer")}
       >
         {layer.visible ? <Icon name="eye" /> : <Icon name="eyeOff" />}
       </button>
@@ -61,7 +63,7 @@ export function LayerItem({
               e.stopPropagation();
               onReorder(layer.id, "up");
             }}
-            title="Subir capa"
+            title={t("layers.moveUp")}
             className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-white"
           >
             <Icon name="chevronUp" />
@@ -72,7 +74,7 @@ export function LayerItem({
               e.stopPropagation();
               onReorder(layer.id, "down");
             }}
-            title="Bajar capa"
+            title={t("layers.moveDown")}
             className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-white"
           >
             <Icon name="chevronDown" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import type { ChatMessage } from "@/network/events";
 
@@ -34,6 +35,7 @@ function getColorForUsername(username: string): string {
 const SELF_COLOR = "text-cyan-400";
 
 export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUsername }: Props) {
+  const t = useTranslations();
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +55,7 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
     <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5">
       <div className="border-b border-white/10 px-4 py-2">
         <p className="text-xs font-medium text-slate-400">
-          Chat {isConnected ? "● Conectado" : "○ Desconectado"}
+          {t("chat.title")} {isConnected ? t("chat.connected") : t("chat.disconnected")}
         </p>
       </div>
 
@@ -61,8 +63,8 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
         {messages.length === 0 && (
           <p className="pt-4 text-center text-xs text-slate-500">
             {isConnected
-              ? "Sin mensajes todavía"
-              : "Esperando conexión P2P..."}
+              ? t("chat.noMessages")
+              : t("chat.waitingP2P")}
           </p>
         )}
 
@@ -76,7 +78,7 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
               <div className={`max-w-[85%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
                 <div className={`flex items-center gap-1 px-1 ${isOwn ? "flex-row-reverse" : ""}`}>
                   <span className={`text-xs font-medium ${userColor}`}>
-                    {isOwn ? "Tú" : msg.username}
+                    {isOwn ? t("chat.you") : msg.username}
                   </span>
                   {isHost && (
                     <Icon name="crown" className="h-3 w-3 text-amber-400" />
@@ -109,7 +111,7 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder={isConnected ? "Escribe un mensaje..." : "Conectando..."}
+          placeholder={isConnected ? t("chat.messagePlaceholder") : t("chat.connecting")}
           disabled={!isConnected}
           className="min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-40"
         />
@@ -119,7 +121,7 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
           disabled={!isConnected || !input.trim()}
           className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Enviar
+          {t("chat.send")}
         </button>
       </div>
     </div>

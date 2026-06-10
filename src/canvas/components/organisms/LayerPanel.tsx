@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { LayerList } from "@/canvas/components/molecules/LayerList";
 import { LayerPanelActions } from "@/canvas/components/molecules/LayerPanelActions";
@@ -43,6 +44,7 @@ export function LayerPanel({
   isMobileOpen,
   onCloseMobile,
 }: LayerPanelProps) {
+  const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const hasSelection = selectedLayerIds.length > 0;
   const mergedDisabled = layers.length <= 1;
@@ -80,7 +82,7 @@ export function LayerPanel({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        title="Capas"
+        title={t("layers.heading")}
         className="fixed bottom-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-black/60 text-slate-300 shadow-lg backdrop-blur-md transition-all hover:bg-white/15 hover:text-white"
       >
         <Icon name="layers" />
@@ -98,7 +100,7 @@ export function LayerPanel({
     >
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
         <span className="text-xs font-medium text-slate-300">
-          Capas
+          {t("layers.heading")}
           {layers.length > 0 && (
             <span className="ml-1 text-[10px] text-slate-500">({layers.length})</span>
           )}
@@ -106,7 +108,7 @@ export function LayerPanel({
         <button
           type="button"
           onClick={close}
-          title="Cerrar"
+          title={t("canvas.closeLayers")}
           className="flex h-5 w-5 items-center justify-center rounded-md text-slate-500 transition-colors hover:text-white"
         >
           <Icon name="chevronDown" className="h-3 w-3" />

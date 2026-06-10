@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { PasswordInput } from "@/landing/components/atoms/PasswordInput";
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
+  const t = useTranslations();
   const [code, setCode] = useState("");
   const [joinPassword, setJoinPassword] = useState("");
   const [mode, setMode] = useState<"join" | "create">("join");
@@ -43,9 +45,9 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
     <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_24px_100px_-40px_rgba(15,23,42,0.8)] backdrop-blur sm:p-6">
       <div className="flex flex-col gap-4">
         <div className="space-y-1 text-center">
-          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Dibuja con tus amigos</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{t("landing.actions.drawWithFriends")}</p>
           <p className="text-sm text-slate-400">
-            {mode === "join" ? "Entra con un código o crea una sala." : "Configurá tu sala antes de crearla."}
+            {mode === "join" ? t("landing.actions.joinDescription") : t("landing.actions.createDescription")}
           </p>
         </div>
 
@@ -59,7 +61,7 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
         >
           <div className="space-y-2">
             <label className="block text-[10px] uppercase tracking-[0.14em] text-slate-500">
-              Código de sala
+              {t("landing.actions.roomCode")}
             </label>
             <input
               type="text"
@@ -76,12 +78,12 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
           {code.trim().length > 0 && (
             <div className="mt-2 space-y-2">
               <label className="block text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                Contraseña <span className="text-slate-600">(opcional)</span>
+                {t("landing.actions.password")}
               </label>
               <PasswordInput
                 value={joinPassword}
                 onChange={setJoinPassword}
-                placeholder="Contraseña de la sala"
+                placeholder={t("landing.actions.passwordPlaceholder")}
                 disabled={isLoading}
                 onKeyDown={(e) => e.key === "Enter" && handleJoin()}
               />
@@ -97,13 +99,13 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
             {isLoading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
             ) : (
-              "Unirse"
+              t("landing.actions.join")
             )}
           </button>
 
           <div className="mt-4 flex items-center gap-3 py-1">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">o</span>
+            <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{t("common.or")}</span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
 
@@ -114,7 +116,7 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Icon name="plus" className="h-4 w-4 text-cyan-400" />
-            <span>Crear una sala</span>
+            <span>{t("landing.actions.createRoom")}</span>
           </button>
         </div>
 
@@ -132,20 +134,20 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
             className="mb-3 inline-flex items-center gap-1.5 text-sm text-slate-400 transition hover:text-slate-200"
           >
             <Icon name="arrowLeft" className="h-4 w-4" />
-            <span>Unirse a una sala</span>
+            <span>{t("landing.actions.joinRoom")}</span>
           </button>
 
           <div className="space-y-3">
             <div className="space-y-2">
               <label className="block text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                Nombre de sala <span className="text-slate-600">(opcional)</span>
+                {t("landing.actions.roomName")}
               </label>
               <input
                 type="text"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                placeholder="Mi sala"
+                placeholder={t("landing.actions.roomNamePlaceholder")}
                 disabled={isLoading}
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-40"
               />
@@ -153,12 +155,12 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
 
             <div className="space-y-2">
               <label className="block text-[10px] uppercase tracking-[0.14em] text-slate-500">
-                Contraseña <span className="text-slate-600">(opcional)</span>
+                {t("landing.actions.password")}
               </label>
               <PasswordInput
                 value={createPassword}
                 onChange={setCreatePassword}
-                placeholder="Protegé tu sala"
+                placeholder={t("landing.actions.createRoomPasswordPlaceholder")}
                 disabled={isLoading}
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               />
@@ -176,7 +178,7 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
                 ) : (
                   <>
                     <Icon name="plus" className="h-4 w-4" />
-                    <span>Crear</span>
+                    <span>{t("landing.actions.create")}</span>
                   </>
                 )}
               </button>
@@ -186,7 +188,7 @@ export function ActionCards({ onCreateRoom, onJoinRoom, isLoading }: Props) {
                 disabled={isLoading}
                 className="rounded-2xl border border-white/10 px-4 py-3 text-sm text-slate-400 transition hover:border-white/20 hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
             </div>
           </div>

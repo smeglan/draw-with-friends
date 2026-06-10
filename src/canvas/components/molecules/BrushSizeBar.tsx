@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { DRAWING_LIMITS } from "@/shared/constants/drawing";
 
 type BrushSizeBarProps = {
@@ -17,6 +18,8 @@ export function BrushSizeBar({
   onSizeChange,
   onOpacityChange,
 }: BrushSizeBarProps) {
+  const t = useTranslations("canvas");
+
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-md">
       <div className="flex items-center gap-3">
@@ -26,9 +29,9 @@ export function BrushSizeBar({
         />
         <div className="min-w-0">
           <p className="truncate text-[10px] uppercase tracking-[0.12em] text-slate-400">
-            Tamaño
+            {t("brushSize")}
           </p>
-          <p className="text-xs text-white/70">Grosor del trazo</p>
+          <p className="text-xs text-white/70">{t("brushSizeDescription")}</p>
         </div>
         <input
           type="range"
@@ -46,9 +49,9 @@ export function BrushSizeBar({
       <div className="flex items-center gap-3">
         <div className="min-w-0">
           <p className="truncate text-[10px] uppercase tracking-[0.12em] text-slate-400">
-            Opacidad
+            {t("opacity")}
           </p>
-          <p className="text-xs text-white/70">Transparencia del pincel</p>
+          <p className="text-xs text-white/70">{t("opacityDescription")}</p>
         </div>
         <input
           type="range"

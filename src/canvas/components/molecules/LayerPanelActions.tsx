@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 
 type LayerPanelActionsProps = {
@@ -29,26 +30,27 @@ export function LayerPanelActions({
   onRemoveLayer,
   onMergeSelected,
 }: LayerPanelActionsProps) {
+  const t = useTranslations();
   return (
     <>
       {hasSelection && (
         <div className="flex items-center justify-between border-t border-white/5 px-3 py-1">
           <span className="text-[9px] text-slate-500">
-            {selectedCount} seleccionada(s)
+            {t("layers.selectedCount", { count: selectedCount })}
           </span>
           <button
             type="button"
             onClick={onClearLayerSelection}
             className="text-[9px] text-slate-600 transition-colors hover:text-white"
           >
-            &times; Deseleccionar
+            &times; {t("layers.deselect")}
           </button>
         </div>
       )}
 
       {isLayerWarning && (
         <p className="border-t border-white/5 px-3 py-1 text-[9px] leading-tight text-amber-400/70">
-          Muchas capas puede afectar el rendimiento
+          {t("layers.performanceWarning")}
         </p>
       )}
 
@@ -56,7 +58,7 @@ export function LayerPanelActions({
         <button
           type="button"
           onClick={onAddLayer}
-          title="Agregar capa"
+          title={t("layers.addLayer")}
           className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
         >
           <Icon name="plus" />
@@ -72,8 +74,8 @@ export function LayerPanelActions({
           }}
           title={
             hasSelection
-              ? `Eliminar ${selectedCount} capa(s)`
-              : "Eliminar capa"
+              ? t("layers.deleteCount", { count: selectedCount })
+              : t("layers.deleteLayer")
           }
           disabled={layersLength <= 1 && !hasSelection}
           className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
@@ -87,9 +89,9 @@ export function LayerPanelActions({
           title={
             hasSelection
               ? selectedCount >= 2
-                ? `Fusionar ${selectedCount} capas`
-                : "Selecciona 2+ capas para fusionar"
-              : "Fusionar hacia abajo"
+                ? t("layers.mergeCount", { count: selectedCount })
+                : t("layers.mergeSelectHint")
+              : t("layers.mergeDown")
           }
           className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-white/10 hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-30"
         >

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { ConfirmLeaveModal } from "@/shared/components/ConfirmLeaveModal";
 import type { CanvasDimensions } from "@/canvas/types";
@@ -69,6 +70,7 @@ export function MobileMenuDrawer({
   const [draftWidth, setDraftWidth] = useState(canvasSize.width.toString());
   const [draftHeight, setDraftHeight] = useState(canvasSize.height.toString());
   const router = useRouter();
+  const t = useTranslations();
 
   if (!open) return null;
 
@@ -122,13 +124,13 @@ export function MobileMenuDrawer({
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div className="flex items-center gap-2">
             <Icon name="menu" className="h-4 w-4 text-slate-300" />
-            <span className="text-sm font-medium text-white">Menu</span>
+            <span className="text-sm font-medium text-white">{t("canvas.menu")}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/20 text-slate-300 transition hover:border-white/20 hover:text-white"
-            aria-label="Cerrar menu"
+            aria-label={t("canvas.closeMenu")}
           >
             <Icon name="chevronDown" className="h-3.5 w-3.5 rotate-180" />
           </button>
@@ -142,8 +144,8 @@ export function MobileMenuDrawer({
           >
             <Icon name="home" className="h-5 w-5 text-slate-400" />
             <div>
-              <p className="text-sm font-medium text-white">Volver al inicio</p>
-              <p className="text-xs text-slate-400">Salir del dibujo actual</p>
+              <p className="text-sm font-medium text-white">{t("common.backToHome")}</p>
+              <p className="text-xs text-slate-400">{t("canvas.leaveWarning")}</p>
             </div>
           </button>
 
@@ -163,8 +165,8 @@ export function MobileMenuDrawer({
               >
                 <Icon name="save" className="h-5 w-5 text-slate-400" />
                 <div>
-                  <p className="text-sm font-medium text-white">Guardar proyecto</p>
-                  <p className="text-xs text-slate-400">Archivo .dibujo</p>
+                  <p className="text-sm font-medium text-white">{t("canvas.projectSave")}</p>
+                  <p className="text-xs text-slate-400">{t("canvas.projectSaveMobileDescription")}</p>
                 </div>
               </button>
             )}
@@ -177,8 +179,8 @@ export function MobileMenuDrawer({
               >
                 <Icon name="import" className="h-5 w-5 text-slate-400" />
                 <div>
-                  <p className="text-sm font-medium text-white">Abrir proyecto</p>
-                  <p className="text-xs text-slate-400">Archivo .dibujo</p>
+                  <p className="text-sm font-medium text-white">{t("canvas.projectOpen")}</p>
+                  <p className="text-xs text-slate-400">{t("canvas.projectOpenMobileDescription")}</p>
                 </div>
               </button>
             )}
@@ -190,16 +192,16 @@ export function MobileMenuDrawer({
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">
-                    Tamano
+                    {t("canvas.size")}
                   </p>
-                  <p className="text-xs text-slate-500">Presets o tamano propio</p>
+                  <p className="text-xs text-slate-500">{t("canvas.sizePresets")}</p>
                 </div>
                 <button
                   type="button"
                   onClick={onFitToScreen}
                   className="shrink-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 hover:text-white"
                 >
-                  Fit
+                  {t("common.fit")}
                 </button>
               </div>
 
@@ -231,7 +233,7 @@ export function MobileMenuDrawer({
               <div className="mt-3 flex flex-wrap items-end gap-2">
                 <label className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">
-                    Ancho
+                    {t("canvas.width")}
                   </span>
                   <input
                     type="number"
@@ -246,7 +248,7 @@ export function MobileMenuDrawer({
 
                 <label className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-[10px] uppercase tracking-[0.1em] text-slate-500">
-                    Alto
+                    {t("canvas.height")}
                   </span>
                   <input
                     type="number"
@@ -264,7 +266,7 @@ export function MobileMenuDrawer({
                   onClick={applyCustomSize}
                   className="h-10 rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 text-sm font-medium text-cyan-100 transition hover:border-cyan-300/30 hover:bg-cyan-300/15"
                 >
-                  Aplicar
+                  {t("common.apply")}
                 </button>
               </div>
             </div>
@@ -272,9 +274,9 @@ export function MobileMenuDrawer({
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
               <div className="mb-2">
                 <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">
-                  Exportar
+                  {t("canvas.exportSection")}
                 </p>
-                <p className="text-xs text-slate-500">PNG, JPEG y WEBP</p>
+                <p className="text-xs text-slate-500">{t("canvas.exportDescription")}</p>
               </div>
 
               {EXPORT_FORMATS.map((format) => (
@@ -287,9 +289,9 @@ export function MobileMenuDrawer({
                   <div>
                     <p className="text-sm font-medium text-white">{format.label}</p>
                     <p className="text-xs text-slate-400">
-                      {format.id === "png" && "Ideal para transparencia y calidad"}
-                      {format.id === "jpeg" && "Ligero para compartir"}
-                      {format.id === "webp" && "Buen balance entre peso y calidad"}
+                      {format.id === "png" && t("export.pngDescription")}
+                      {format.id === "jpeg" && t("export.jpegDescription")}
+                      {format.id === "webp" && t("export.webpDescription")}
                     </p>
                   </div>
                   <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-300">

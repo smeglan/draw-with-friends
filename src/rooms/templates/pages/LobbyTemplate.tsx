@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
@@ -9,6 +10,7 @@ import { LobbyActions } from "@/rooms/components/organisms/LobbyActions";
 import { useState } from "react";
 
 export function LobbyTemplate() {
+  const t = useTranslations();
   const { username, setUsername } = useUsername();
   const { createRoom, joinRoom, error, isLoading } = useLobby();
   const [dismissed, setDismissed] = useState(false);
@@ -26,12 +28,12 @@ export function LobbyTemplate() {
             >
               <Icon name="menu" className="h-4 w-4 rotate-90" />
             </Link>
-            <h1 className="text-xl font-bold text-white">Salas</h1>
+            <h1 className="text-xl font-bold text-white">{t("room.heading")}</h1>
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
             <span className="text-sm text-slate-400">👤</span>
-            <span className="text-sm text-slate-200">{username || "Sin nombre"}</span>
+            <span className="text-sm text-slate-200">{username || t("room.noName")}</span>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { StrokeData } from "@/network/events";
 import { Icon } from "@/shared/icons";
 import { ColorSection } from "@/canvas/components/molecules/ColorSection";
@@ -26,16 +27,17 @@ export function RoomCanvas({
   hostId,
   peerStatus,
 }: Props) {
+  const t = useTranslations();
   const [toolsOpen, setToolsOpen] = useState(true);
   const isHost = myId !== null && hostId !== null && myId === hostId;
   const syncLabel =
     peerStatus === "connected"
       ? isHost
-        ? "Host sync"
-        : "Live sync"
+        ? t("canvas.statusHostSync")
+        : t("canvas.statusLiveSync")
       : peerStatus === "connecting"
-        ? "Syncing"
-        : "Waiting";
+        ? t("canvas.statusSyncing")
+        : t("canvas.statusWaiting");
 
   const {
     canvasRef,
@@ -107,7 +109,7 @@ export function RoomCanvas({
               style={{ backgroundColor: brushColor }}
             />
             <span className="text-[10px] uppercase tracking-[0.08em] text-slate-400">
-              Tamaño
+              {t("canvas.size")}
             </span>
             <span className="ml-auto text-xs text-white/70">{brushSize}</span>
           </div>
@@ -118,7 +120,7 @@ export function RoomCanvas({
             value={brushSize}
             onChange={(e) => setBrushSize(Number(e.target.value))}
             className="w-full accent-cyan-300"
-            aria-label="Tamaño del pincel"
+            aria-label={t("canvas.brushSizeLabel")}
           />
         </div>
 
@@ -128,22 +130,22 @@ export function RoomCanvas({
             onClick={handleUndoClick}
             disabled={strokesCount === 0}
             className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label="Deshacer"
-            title="Deshacer"
+            aria-label={t("canvas.undo")}
+            title={t("canvas.undo")}
           >
             <Icon name="undo" className="h-3.5 w-3.5" />
-            Deshacer
+            {t("canvas.undo")}
           </button>
           <button
             type="button"
             onClick={handleClearClick}
             disabled={strokesCount === 0}
             className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-red-400/40 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label="Limpiar"
-            title="Limpiar lienzo"
+            aria-label={t("canvas.clear")}
+            title={t("canvas.clearCanvas")}
           >
             <Icon name="trash" className="h-3.5 w-3.5" />
-            Limpiar
+            {t("canvas.clear")}
           </button>
         </div>
       </div>
@@ -152,12 +154,12 @@ export function RoomCanvas({
         type="button"
         onClick={() => setToolsOpen((o) => !o)}
         className="flex h-9 w-full shrink-0 items-center justify-center border-b border-white/10 bg-white/[0.02] text-slate-500 transition hover:bg-white/5 hover:text-cyan-400 xl:h-auto xl:w-7 xl:border-b-0 xl:border-r"
-        title={toolsOpen ? "Ocultar herramientas" : "Mostrar herramientas"}
+        title={toolsOpen ? t("canvas.hideTools") : t("canvas.showTools")}
       >
         <span className="flex items-center gap-2">
           <Icon name="brush" className="h-4 w-4" />
           <span className="text-[11px] uppercase tracking-[0.08em] xl:hidden">
-            {toolsOpen ? "Ocultar" : "Herramientas"}
+            {toolsOpen ? t("canvas.hide") : t("canvas.tools")}
           </span>
         </span>
       </button>
@@ -171,7 +173,7 @@ export function RoomCanvas({
             {syncLabel}
           </div>
           <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[11px] text-slate-300 backdrop-blur">
-            {strokesCount} strokes
+            {t("canvas.strokeCount", { count: strokesCount })}
           </div>
         </div>
 

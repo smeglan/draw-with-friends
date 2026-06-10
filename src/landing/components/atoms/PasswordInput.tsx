@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function PasswordInput({ value, onChange, placeholder, disabled, onKeyDown }: Props) {
+  const t = useTranslations();
   const [show, setShow] = useState(false);
 
   return (
@@ -21,7 +23,7 @@ export function PasswordInput({ value, onChange, placeholder, disabled, onKeyDow
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder={placeholder ?? "Contraseña"}
+        placeholder={placeholder ?? t("landing.actions.passwordGenericPlaceholder")}
         disabled={disabled}
         className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-10 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-40"
       />

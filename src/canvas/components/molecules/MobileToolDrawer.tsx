@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { DrawingTool } from "@/canvas/types";
 import { BrushSizeBar } from "@/canvas/components/molecules/BrushSizeBar";
 import { BucketSensitivityBar } from "@/canvas/components/molecules/BucketSensitivityBar";
@@ -29,6 +30,7 @@ export function MobileToolDrawer({
   onBrushOpacityChange,
   onBucketSensitivityChange,
 }: MobileToolDrawerProps) {
+  const t = useTranslations();
   if (!open) return null;
 
   return (
@@ -42,7 +44,7 @@ export function MobileToolDrawer({
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
 
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.08em] text-slate-400">
-          {activeTool === "bucket" ? "Sensibilidad del balde" : "Tamaño y opacidad"}
+          {activeTool === "bucket" ? t("canvas.bucketSensitivity") : t("canvas.sizeAndOpacity")}
         </p>
 
         {activeTool === "bucket" ? (

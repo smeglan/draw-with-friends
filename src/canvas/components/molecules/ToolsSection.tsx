@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ToolButton } from "@/canvas/components/molecules/ToolButton";
 import { ShapeMenu } from "@/canvas/components/organisms/ShapeMenu";
 import type { DrawingTool, ShapeType } from "@/canvas/types";
@@ -17,14 +18,6 @@ type ToolsSectionProps = {
   onShapeSelect: (shape: ShapeType) => void;
 };
 
-const TOOLS: ToolConfig[] = [
-  { id: "brush", label: "Pincel" },
-  { id: "bucket", label: "Balde" },
-  { id: "eraser", label: "Borrador" },
-  { id: "eyedropper", label: "Cuenta gotas" },
-  { id: "hand", label: "Mano" },
-];
-
 const SHAPE_SVG: Record<ShapeType, React.ReactNode> = {
   rectangle: <rect x="6" y="6" width="12" height="12" rx="1.5" />,
   ellipse: <ellipse cx="12" cy="12" rx="7.5" ry="5.5" />,
@@ -33,14 +26,23 @@ const SHAPE_SVG: Record<ShapeType, React.ReactNode> = {
 };
 
 export function ToolsSection({ activeTool, selectedShape, onToolSelect, onShapeSelect }: ToolsSectionProps) {
+  const t = useTranslations();
   const [shapeButtonEl, setShapeButtonEl] = useState<HTMLButtonElement | null>(null);
   const shapeButtonRef = useCallback((el: HTMLButtonElement | null) => setShapeButtonEl(el), []);
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
+  const TOOLS: ToolConfig[] = [
+    { id: "brush", label: t("tools.brush") },
+    { id: "bucket", label: t("tools.bucket") },
+    { id: "eraser", label: t("tools.eraser") },
+    { id: "eyedropper", label: t("tools.eyedropper") },
+    { id: "hand", label: t("tools.hand") },
+  ];
+
   return (
     <div className="flex w-full flex-col items-stretch gap-2 rounded-2xl border border-white/10 bg-white/5 p-2">
       <p className="w-full text-center text-[10px] uppercase tracking-[0.08em] text-slate-300">
-        Herramientas
+        {t("tools.heading")}
       </p>
       <div className="grid w-full grid-cols-3 gap-2">
         {TOOLS.map((tool) => (
@@ -65,7 +67,7 @@ export function ToolsSection({ activeTool, selectedShape, onToolSelect, onShapeS
             ? "border-cyan-300 bg-cyan-300/15 text-cyan-100 shadow-[0_0_0_1px_rgba(103,232,249,0.18)]"
             : "border-white/10 bg-black/20 text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white",
         ].join(" ")}
-        title="Elegir forma"
+        title={t("tools.chooseShape")}
       >
         <span className="flex min-w-0 items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-black/20">
@@ -73,7 +75,7 @@ export function ToolsSection({ activeTool, selectedShape, onToolSelect, onShapeS
               {SHAPE_SVG[selectedShape]}
             </svg>
           </span>
-          <span className="truncate text-xs font-medium">Figuras</span>
+          <span className="truncate text-xs font-medium">{t("tools.shapes")}</span>
         </span>
         <svg
           viewBox="0 0 24 24"

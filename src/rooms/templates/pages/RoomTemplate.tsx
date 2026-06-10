@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function RoomTemplate({ roomId }: Props) {
+  const t = useTranslations();
   const { username, setUsername } = useUsername();
   const [roomPassword] = useState(() => getRoomPassword(roomId));
   const { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom } = useRoomOrchestrator(
@@ -67,16 +69,16 @@ export function RoomTemplate({ roomId }: Props) {
               href="/lobby"
               onClick={leaveRoom}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
-              title="Salir de la sala"
+              title={t("room.exitRoomTitle")}
             >
               <Icon name="arrowLeft" className="h-4 w-4" />
             </Link>
-            <h1 className="text-sm font-medium text-white">Sala: {roomId}</h1>
+            <h1 className="text-sm font-medium text-white">{t("room.roomLabel", { id: roomId })}</h1>
             <button
               type="button"
               onClick={handleCopy}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
-              title={copied ? "¡Copiado!" : "Copiar código de sala"}
+              title={copied ? t("common.copied") : t("room.copyRoomCode")}
             >
               {copied ? (
                 <span className="text-xs font-medium text-green-400">OK</span>
@@ -100,7 +102,7 @@ export function RoomTemplate({ roomId }: Props) {
               type="button"
               onClick={handleShare}
               className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-white/20 hover:text-white"
-              title="Compartir sala"
+              title={t("room.shareRoom")}
             >
               <Icon name="share" className="h-4 w-4" />
             </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { Player } from "@/network/events";
 import type { PeerStatus } from "@/network/client/PeerManager";
 import { ConnectionDot } from "@/rooms/components/atoms/ConnectionDot";
@@ -25,25 +26,26 @@ export function PlayerSidebar({
   peerStatus,
   roomId,
 }: Props) {
+  const t = useTranslations();
   const playerCount = players.length;
   const canPlay = playerCount >= 2;
   const [ready, setReady] = useState(false);
   const statusLabel =
     peerStatus === "connected"
-      ? "Live"
+      ? t("room.sidebar.statusLive")
       : peerStatus === "connecting"
-        ? "Syncing"
+        ? t("room.sidebar.statusSyncing")
         : peerStatus === "error"
-          ? "Error"
+          ? t("room.sidebar.statusError")
           : peerStatus === "disconnected"
-            ? "Offline"
-            : "Idle";
+            ? t("room.sidebar.statusOffline")
+            : t("room.sidebar.statusIdle");
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4 border-b border-white/10 bg-white/[0.02] p-4 lg:w-72 lg:border-b-0 lg:border-r">
       <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
         <ConnectionDot connected={isConnected} />
-        <span className="text-xs text-slate-400">Sala:</span>
+        <span className="text-xs text-slate-400">{t("room.sidebar.roomLabel")}</span>
         <span className="font-mono text-sm font-medium text-white">{roomId}</span>
         <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-slate-300">
           {statusLabel}
@@ -52,7 +54,7 @@ export function PlayerSidebar({
 
       {!isConnected && (
         <div className="rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-400">
-          Desconectado — esperando reconexión...
+          {t("room.sidebar.disconnected")}
         </div>
       )}
 
@@ -65,7 +67,7 @@ export function PlayerSidebar({
       {isConnected && !isJoined && !error && (
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <div className="h-3 w-3 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-400" />
-          Uniéndose a la sala...
+          {t("room.sidebar.joining")}
         </div>
       )}
 
@@ -73,23 +75,23 @@ export function PlayerSidebar({
         <>
           <div>
             <p className="mb-1 text-sm text-slate-300">
-              {canPlay ? "¡Listo para jugar!" : "Esperando jugadores..."}
+              {canPlay ? t("room.sidebar.readyToPlay") : t("room.sidebar.waitingPlayers")}
             </p>
             <p className="text-xs text-slate-500">
-              {playerCount} jugador{playerCount !== 1 ? "es" : ""} conectado{playerCount !== 1 ? "s" : ""}
-              {!canPlay && " (mínimo 2)"}
+              {t("room.sidebar.playerCount", { count: playerCount })}
+              {!canPlay && t("room.sidebar.minPlayers")}
             </p>
             <p className="mt-1 text-[11px] text-slate-500">
-              {peerStatus === "idle" && "Esperando conexión P2P..."}
-              {peerStatus === "connecting" && "Estableciendo conexión P2P..."}
+              {peerStatus === "idle" && t("room.sidebar.waitingP2P")}
+              {peerStatus === "connecting" && t("room.sidebar.connectingP2P")}
               {peerStatus === "connected" && (
-                <span className="text-green-400">Conexión P2P establecida</span>
+                <span className="text-green-400">{t("room.sidebar.p2pEstablished")}</span>
               )}
               {peerStatus === "disconnected" && (
-                <span className="text-red-400">Conexión P2P perdida</span>
+                <span className="text-red-400">{t("room.sidebar.p2pLost")}</span>
               )}
               {peerStatus === "error" && (
-                <span className="text-red-400">Error en conexión P2P</span>
+                <span className="text-red-400">{t("room.sidebar.p2pError")}</span>
               )}
             </p>
           </div>
@@ -106,7 +108,7 @@ export function PlayerSidebar({
                 : "border border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10",
             ].join(" ")}
           >
-            {ready ? "✓ Listo" : "Listo"}
+            {ready ? t("room.sidebar.readyCheck") : t("room.sidebar.ready")}
           </button>
         </>
       )}
