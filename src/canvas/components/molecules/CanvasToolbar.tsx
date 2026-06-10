@@ -8,6 +8,8 @@ import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import { BrushSizeBar } from "@/canvas/components/molecules/BrushSizeBar";
 import { BucketSensitivityBar } from "@/canvas/components/molecules/BucketSensitivityBar";
 import { ExportDrawer } from "@/canvas/components/organisms/ExportDrawer";
+import { MobileMenuDrawer } from "@/canvas/components/molecules/MobileMenuDrawer";
+import { MobileToolDrawer } from "@/canvas/components/molecules/MobileToolDrawer";
 import type { DrawingTool } from "@/canvas/types";
 
 type CanvasToolbarProps = {
@@ -30,6 +32,8 @@ type CanvasToolbarProps = {
   onCanvasZoomChange: (zoom: number) => void;
   onUndo: () => void;
   onRedo: () => void;
+  mobile?: boolean;
+  onOpenLayers?: () => void;
 };
 
 export function CanvasToolbar({
@@ -52,8 +56,12 @@ export function CanvasToolbar({
   onCanvasZoomChange,
   onUndo,
   onRedo,
+  mobile,
+  onOpenLayers,
 }: CanvasToolbarProps) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showLeftMenu, setShowLeftMenu] = useState(false);
+  const [showToolSettings, setShowToolSettings] = useState(false);
   const router = useRouter();
 
   const isFullscreen = useSyncExternalStore(
@@ -76,24 +84,91 @@ export function CanvasToolbar({
     }
   };
 
-  return (
-    <div className="flex flex-col items-stretch gap-3 px-3 pt-14 lg:flex-row lg:items-start lg:px-3 lg:pt-3">
-      <button
-        type="button"
-        onClick={() => setShowLeaveModal(true)}
-        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-slate-200 transition hover:border-white/20 hover:bg-white/15 hover:text-white"
-        aria-label="Volver al inicio"
-        title="Volver al inicio"
-      >
-        <Icon name="home" />
-      </button>
+  if (mobile) {
+    const showToolButton = activeTool === "brush" || activeTool === "eraser" || activeTool === "bucket";
 
-      {showLeaveModal && (
-        <ConfirmLeaveModal
-          onConfirm={() => router.push("/")}
-          onCancel={() => setShowLeaveModal(false)}
+    return (
+      <>
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/95 px-3 backdrop-blur-lg">
+          <button
+            type="button"
+            onClick={() => setShowLeftMenu(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
+            aria-label="Menu"
+          >
+            <Icon name="menu" className="h-4 w-4" />
+          </button>
+
+          <span className="text-[11px] font-medium text-slate-500">
+            {Math.round(canvasZoom * 100)}%
+          </span>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onOpenLayers}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
+              aria-label="Capas"
+            >
+              <Icon name="layers" className="h-4 w-4" />
+            </button>
+            {showToolButton && (
+              <button
+                type="button"
+                onClick={() => setShowToolSettings(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:text-white"
+                aria-label={`Ajustes de ${activeTool}`}
+              >
+                <Icon name={activeTool as "brush" | "bucket" | "eraser"} className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <MobileMenuDrawer
+          open={showLeftMenu}
+          onClose={() => setShowLeftMenu(false)}
+          canvasRef={canvasRef}
+          canvasSize={canvasSize}
+          onCanvasSizeChange={onCanvasSizeChange}
+          onFitToScreen={onFitToScreen}
         />
-      )}
+
+        <MobileToolDrawer
+          open={showToolSettings}
+          onClose={() => setShowToolSettings(false)}
+          activeTool={activeTool}
+          brushSize={brushSize}
+          brushOpacity={brushOpacity}
+          brushColor={brushColor}
+          bucketSensitivity={bucketSensitivity}
+          onBrushSizeChange={onBrushSizeChange}
+          onBrushOpacityChange={onBrushOpacityChange}
+          onBucketSensitivityChange={onBucketSensitivityChange}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col items-stretch gap-3 px-3 pt-14 lg:flex-row lg:items-start lg:px-3 lg:pt-3">
+        <button
+          type="button"
+          onClick={() => setShowLeaveModal(true)}
+          className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-slate-200 transition hover:border-white/20 hover:bg-white/15 hover:text-white"
+          aria-label="Volver al inicio"
+          title="Volver al inicio"
+        >
+          <Icon name="home" />
+        </button>
+
+        {showLeaveModal && (
+          <ConfirmLeaveModal
+            onConfirm={() => router.push("/")}
+            onCancel={() => setShowLeaveModal(false)}
+          />
+        )}
 
       <ExportDrawer
         canvasRef={canvasRef}
@@ -170,5 +245,6 @@ export function CanvasToolbar({
         </button>
       </div>
     </div>
+    </>
   );
 }

@@ -6,11 +6,15 @@ import { DrawingCanvas } from "@/canvas/components/canvas/DrawingCanvas";
 import { CanvasToolbar } from "@/canvas/components/molecules/CanvasToolbar";
 import { ToolSidebar } from "@/canvas/components/organisms/ToolSidebar";
 import { LayerPanel } from "@/canvas/components/organisms/LayerPanel";
+import { MobileBottomBar } from "@/canvas/components/molecules/MobileBottomBar";
+import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 import { useDrawingBoard } from "@/canvas/hooks/useDrawingBoard";
 
 export default function DrawingBoard() {
   const drawingBoard = useDrawingBoard();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileLayersOpen, setMobileLayersOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 1023px)");
   const {
     stageRef,
     canvasAreaRef,
@@ -61,6 +65,104 @@ export default function DrawingBoard() {
     reorderLayer,
     setActiveLayer,
   } = drawingBoard;
+
+  if (isMobile) {
+    return (
+      <div className="flex h-[100dvh] flex-col overflow-hidden bg-transparent">
+        <CanvasToolbar
+          stageRef={stageRef}
+          canvasRef={canvasRef}
+          canvasSize={canvasSize}
+          activeTool={activeTool}
+          brushSize={brushSize}
+          brushOpacity={brushOpacity}
+          brushColor={brushColor}
+          bucketSensitivity={bucketSensitivity}
+          canvasZoom={canvasZoom}
+          strokesCount={strokesCount}
+          redoCount={redoCount}
+          onCanvasSizeChange={handleCanvasSizeChange}
+          onFitToScreen={fitCanvasToScreen}
+          onBrushSizeChange={handleBrushSizeChange}
+          onBrushOpacityChange={handleBrushOpacityChange}
+          onBucketSensitivityChange={handleBucketSensitivityChange}
+          onCanvasZoomChange={drawingBoard.setCanvasZoom}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          mobile
+          onOpenLayers={() => setMobileLayersOpen(true)}
+        />
+
+        <DrawingCanvas
+          canvasAreaRef={canvasAreaRef}
+          canvasRef={canvasRef}
+          previewCanvasRef={previewCanvasRef}
+          innerContentRef={innerContentRef}
+          canvasWidth={canvasSize.width}
+          canvasHeight={canvasSize.height}
+          zoom={canvasZoom}
+          activeTool={activeTool}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onCanvasWheel={handleCanvasWheel}
+        />
+
+        <MobileBottomBar
+          activeTool={activeTool}
+          brushColor={brushColor}
+          strokesCount={strokesCount}
+          redoCount={redoCount}
+          onToolSelect={setActiveTool}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onOpenSidebar={() => setMobileSidebarOpen(true)}
+        />
+
+        <ToolSidebar
+          activeTool={activeTool}
+          brushColor={brushColor}
+          selectedShape={selectedShape}
+          onToolSelect={setActiveTool}
+          onColorSelect={setBrushColor}
+          customColors={customColors}
+          selectedSlotIndex={selectedSlotIndex}
+          onCustomColorClick={handleCustomColorClick}
+          onWheelColorChange={handleWheelColorChange}
+          onShapeSelect={handleShapeSelect}
+          savedPalettes={savedPalettes}
+          activePaletteId={activePaletteId}
+          onSavePalette={drawingBoard.handleSavePalette}
+          onCreatePalette={drawingBoard.handleCreatePalette}
+          onSelectPalette={drawingBoard.handleSelectPalette}
+          onDeletePalette={drawingBoard.handleDeletePalette}
+          onExportPalette={drawingBoard.handleExportPalette}
+          onImportPaletteJson={drawingBoard.handleImportPaletteJson}
+          isMobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+        />
+
+        <LayerPanel
+          layers={layers}
+          activeLayerId={activeLayerId}
+          selectedLayerIds={selectedLayerIds}
+          isLayerWarning={isLayerWarning}
+          onSetActiveLayer={setActiveLayer}
+          onToggleVisibility={toggleLayerVisibility}
+          onAddLayer={addLayer}
+          onRemoveLayer={removeLayer}
+          onReorderLayer={reorderLayer}
+          onToggleLayerSelection={toggleLayerSelection}
+          onClearLayerSelection={clearLayerSelection}
+          onMergeSelected={mergeSelected}
+          onDeleteSelected={deleteSelected}
+          mobile
+          isMobileOpen={mobileLayersOpen}
+          onCloseMobile={() => setMobileLayersOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={stageRef} className="flex min-h-[100dvh] min-w-0 flex-1 flex-col gap-3 overflow-hidden bg-transparent">

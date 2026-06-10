@@ -17,7 +17,7 @@ export function LandingHero() {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4 py-10 sm:py-16">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center px-4 py-10 sm:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.14),transparent_38%),radial-gradient(circle_at_bottom,rgba(15,23,42,0.85),rgba(2,6,23,1))]" />
 
       <div className="relative flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8">
