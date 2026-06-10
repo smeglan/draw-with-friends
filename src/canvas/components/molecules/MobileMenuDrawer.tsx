@@ -45,6 +45,8 @@ type MobileMenuDrawerProps = {
   canvasSize: CanvasDimensions;
   onCanvasSizeChange: (size: CanvasDimensions) => void;
   onFitToScreen: () => void;
+  onSaveProject?: () => void;
+  onOpenProject?: () => void;
 };
 
 async function blobFromCanvas(canvas: HTMLCanvasElement, mime: string, quality?: number) {
@@ -60,6 +62,8 @@ export function MobileMenuDrawer({
   canvasSize,
   onCanvasSizeChange,
   onFitToScreen,
+  onSaveProject,
+  onOpenProject,
 }: MobileMenuDrawerProps) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [draftWidth, setDraftWidth] = useState(canvasSize.width.toString());
@@ -149,6 +153,37 @@ export function MobileMenuDrawer({
               onCancel={() => setShowLeaveModal(false)}
             />
           )}
+
+          <div className="mt-4 space-y-2">
+            {onSaveProject && (
+              <button
+                type="button"
+                onClick={() => { onSaveProject(); onClose(); }}
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
+              >
+                <Icon name="save" className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="text-sm font-medium text-white">Guardar proyecto</p>
+                  <p className="text-xs text-slate-400">Archivo .dibujo</p>
+                </div>
+              </button>
+            )}
+
+            {onOpenProject && (
+              <button
+                type="button"
+                onClick={() => { onOpenProject(); onClose(); }}
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/20 hover:bg-white/10"
+              >
+                <Icon name="import" className="h-5 w-5 text-slate-400" />
+                <div>
+                  <p className="text-sm font-medium text-white">Abrir proyecto</p>
+                  <p className="text-xs text-slate-400">Archivo .dibujo</p>
+                </div>
+              </button>
+            )}
+
+          </div>
 
           <div className="mt-4 space-y-3">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-3">

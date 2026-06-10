@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Icon } from "@/shared/icons";
 import { DrawingCanvas } from "@/canvas/components/canvas/DrawingCanvas";
 import { CanvasToolbar } from "@/canvas/components/molecules/CanvasToolbar";
@@ -64,11 +64,70 @@ export default function DrawingBoard() {
     toggleLayerVisibility,
     reorderLayer,
     setActiveLayer,
+    saveToFile,
+    openFile,
+    hasAutosave,
+    restoreAutosave,
+    clearAutosave,
   } = drawingBoard;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const restoreBanner = hasAutosave && (
+    <div className="flex items-center justify-between gap-3 border-b border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm">
+      <span className="text-amber-200">Tienes un proyecto sin guardar</span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={restoreAutosave}
+          className="rounded-lg bg-amber-600 px-3 py-1 text-white transition hover:bg-amber-500"
+        >
+          Restaurar
+        </button>
+        <button
+          type="button"
+          onClick={clearAutosave}
+          className="rounded-lg border border-white/20 px-3 py-1 text-slate-300 transition hover:bg-white/10"
+        >
+          Descartar
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!mounted) {
+    return (
+      <div className="flex h-[100dvh] flex-col overflow-hidden bg-transparent">
+        {restoreBanner}
+
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/95 px-3 backdrop-blur-lg" />
+
+        <DrawingCanvas
+          canvasAreaRef={canvasAreaRef}
+          canvasRef={canvasRef}
+          previewCanvasRef={previewCanvasRef}
+          innerContentRef={innerContentRef}
+          canvasWidth={canvasSize.width}
+          canvasHeight={canvasSize.height}
+          zoom={canvasZoom}
+          activeTool={activeTool}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onCanvasWheel={handleCanvasWheel}
+        />
+
+        <div className="flex h-16 shrink-0 border-t border-white/10 bg-slate-950/95 px-3 backdrop-blur-lg" />
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (
       <div className="flex h-[100dvh] flex-col overflow-hidden bg-transparent">
+        {restoreBanner}
+
         <CanvasToolbar
           stageRef={stageRef}
           canvasRef={canvasRef}
@@ -91,6 +150,8 @@ export default function DrawingBoard() {
           onRedo={handleRedo}
           mobile
           onOpenLayers={() => setMobileLayersOpen(true)}
+          onSaveProject={saveToFile}
+          onOpenProject={openFile}
         />
 
         <DrawingCanvas
@@ -176,6 +237,8 @@ export default function DrawingBoard() {
         <Icon name="menu" className="h-4 w-4" />
       </button>
 
+      {restoreBanner}
+
       <CanvasToolbar
         stageRef={stageRef}
         canvasRef={canvasRef}
@@ -196,6 +259,8 @@ export default function DrawingBoard() {
         onCanvasZoomChange={drawingBoard.setCanvasZoom}
         onUndo={handleUndo}
         onRedo={handleRedo}
+        onSaveProject={saveToFile}
+        onOpenProject={openFile}
       />
 
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent lg:flex-row">

@@ -18,6 +18,8 @@ import { useCanvasZoom } from "./useCanvasZoom";
 import { useCanvasPan } from "./useCanvasPan";
 import { useCanvasLayers } from "./useCanvasLayers";
 import { useCanvasPalettes } from "./useCanvasPalettes";
+import { useCanvasPersistence } from "./useCanvasPersistence";
+import type { ProjectFile } from "@/canvas/utils/projectFile";
 import { consolidateActions } from "@/canvas/utils/consolidate";
 
 function scaleCanvasActions(
@@ -107,20 +109,44 @@ export function useDrawingBoard() {
     setBrushColor: tools.setBrushColor,
   });
 
+  const { canvasSizeRef, setCanvasSize } = state;
+  const { setStrokesCount: historySetStrokesCount, setRedoCount: historySetRedoCount } = history;
+
+  const onRestore = useCallback((data: ProjectFile) => {
+    actionsRef.current = data.actions;
+    redoActionsRef.current = [];
+    layersRef.current = data.layers;
+    setLayers(data.layers);
+    activeLayerIdRef.current = data.activeLayerId;
+    setActiveLayerId(data.activeLayerId);
+    canvasSizeRef.current = data.canvasSize;
+    setCanvasSize(data.canvasSize);
+    historySetStrokesCount(data.actions.length);
+    historySetRedoCount(0);
+    state.redrawCanvas();
+  }, [setLayers, setActiveLayerId, setCanvasSize, historySetStrokesCount, historySetRedoCount, state, canvasSizeRef]);
+
+  const persistence = useCanvasPersistence({
+    actionsRef,
+    layersRef,
+    activeLayerIdRef,
+    canvasSizeRef,
+    onRestore,
+  });
+
   const panRef = useRef(pan);
   const toolsRef = useRef(tools);
   const stateRef = useRef(state);
   const historyRef = useRef(history);
+  const persistenceRef = useRef(persistence);
 
   useEffect(() => {
     panRef.current = pan;
     toolsRef.current = tools;
     stateRef.current = state;
     historyRef.current = history;
+    persistenceRef.current = persistence;
   });
-
-  const { canvasSizeRef, setCanvasSize } = state;
-  const { setStrokesCount: historySetStrokesCount, setRedoCount: historySetRedoCount } = history;
 
   const handleCanvasSizeChange = useCallback((nextSize: CanvasDimensions) => {
     const prevSize = canvasSizeRef.current;
@@ -414,6 +440,7 @@ export function useDrawingBoard() {
         s.canvasScaleRef.current
       );
       h.setStrokesCount(h.actionsRef.current.length);
+      persistenceRef.current.triggerAutosave();
     }
   }, []);
 
@@ -458,22 +485,27 @@ export function useDrawingBoard() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleUndo: history.handleUndo,
-    handleRedo: history.handleRedo,
+    handleUndo: () => { history.handleUndo(); persistence.triggerAutosave(); },
+    handleRedo: () => { history.handleRedo(); persistence.triggerAutosave(); },
     redoCount: history.redoCount,
-    handleClear: history.handleClear,
+    handleClear: () => { history.handleClear(); persistence.triggerAutosave(); },
     layers,
     activeLayerId,
     selectedLayerIds: layersManager.selectedLayerIds,
     isLayerWarning: layers.length >= 15,
     toggleLayerSelection: layersManager.toggleLayerSelection,
     clearLayerSelection: layersManager.clearLayerSelection,
-    mergeSelected: layersManager.mergeSelected,
-    deleteSelected: layersManager.deleteSelected,
-    addLayer: layersManager.addLayer,
-    removeLayer: layersManager.removeLayer,
+    mergeSelected: () => { layersManager.mergeSelected(); persistence.triggerAutosave(); },
+    deleteSelected: () => { layersManager.deleteSelected(); persistence.triggerAutosave(); },
+    addLayer: () => { layersManager.addLayer(); persistence.triggerAutosave(); },
+    removeLayer: (id: string) => { layersManager.removeLayer(id); persistence.triggerAutosave(); },
     toggleLayerVisibility: layersManager.toggleLayerVisibility,
-    reorderLayer: layersManager.reorderLayer,
+    reorderLayer: (id: string, direction: "up" | "down") => { layersManager.reorderLayer(id, direction); persistence.triggerAutosave(); },
     setActiveLayer: layersManager.setActiveLayer,
+    saveToFile: persistence.saveToFile,
+    openFile: persistence.openFile,
+    hasAutosave: persistence.hasAutosave,
+    restoreAutosave: persistence.restoreAutosave,
+    clearAutosave: persistence.clearAutosave,
   };
 }

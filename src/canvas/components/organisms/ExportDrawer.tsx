@@ -44,6 +44,8 @@ type ExportDrawerProps = {
   onCanvasSizeChange: (size: CanvasDimensions) => void;
   onFitToScreen: () => void;
   projectName?: string;
+  onSaveProject?: () => void;
+  onOpenProject?: () => void;
 };
 
 async function blobFromCanvas(canvas: HTMLCanvasElement, mime: string, quality?: number) {
@@ -58,6 +60,8 @@ export function ExportDrawer({
   onCanvasSizeChange,
   onFitToScreen,
   projectName = "drawing",
+  onSaveProject,
+  onOpenProject,
 }: ExportDrawerProps) {
   const [open, setOpen] = useState(false);
   const [draftWidth, setDraftWidth] = useState(canvasSize.width.toString());
@@ -236,6 +240,43 @@ export function ExportDrawer({
               </button>
             ))}
           </section>
+
+          {(onSaveProject || onOpenProject) && (
+            <section className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/5 p-3">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-300">Proyecto</p>
+                <p className="text-xs text-slate-500">Guardar o abrir .dibujo</p>
+              </div>
+
+              {onSaveProject && (
+                <button
+                  type="button"
+                  onClick={() => { onSaveProject(); setOpen(false); }}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/10"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-white">Guardar proyecto</p>
+                    <p className="text-xs text-slate-400">Exportar como .dibujo</p>
+                  </div>
+                    <Icon name="save" className="h-4 w-4 text-slate-400" />
+                </button>
+              )}
+
+              {onOpenProject && (
+                <button
+                  type="button"
+                  onClick={() => { onOpenProject(); setOpen(false); }}
+                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-left transition hover:border-cyan-300/30 hover:bg-cyan-300/10"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-white">Abrir proyecto</p>
+                    <p className="text-xs text-slate-400">Cargar archivo .dibujo</p>
+                  </div>
+                  <Icon name="import" className="h-4 w-4 text-slate-400" />
+                </button>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>

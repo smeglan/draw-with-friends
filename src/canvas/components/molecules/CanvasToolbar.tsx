@@ -34,6 +34,8 @@ type CanvasToolbarProps = {
   onRedo: () => void;
   mobile?: boolean;
   onOpenLayers?: () => void;
+  onSaveProject?: () => void;
+  onOpenProject?: () => void;
 };
 
 export function CanvasToolbar({
@@ -58,6 +60,8 @@ export function CanvasToolbar({
   onRedo,
   mobile,
   onOpenLayers,
+  onSaveProject,
+  onOpenProject,
 }: CanvasToolbarProps) {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showLeftMenu, setShowLeftMenu] = useState(false);
@@ -132,6 +136,8 @@ export function CanvasToolbar({
           canvasSize={canvasSize}
           onCanvasSizeChange={onCanvasSizeChange}
           onFitToScreen={onFitToScreen}
+          onSaveProject={onSaveProject}
+          onOpenProject={onOpenProject}
         />
 
         <MobileToolDrawer
@@ -175,6 +181,8 @@ export function CanvasToolbar({
         canvasSize={canvasSize}
         onCanvasSizeChange={onCanvasSizeChange}
         onFitToScreen={onFitToScreen}
+        onSaveProject={onSaveProject}
+        onOpenProject={onOpenProject}
       />
 
       <div className="min-w-0 flex-1">
