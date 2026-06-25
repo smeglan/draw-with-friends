@@ -5,11 +5,16 @@ import type { IncomingSignal, ChatMessage, StrokeData } from "@/network/events";
 import { RoomManager, type RoomManagerState } from "./RoomManager";
 import { PeerManager, type PeerStatus, type PeerManagerConfig } from "./PeerManager";
 import { ChatManager } from "./ChatManager";
+import { VoteManager } from "./VoteManager";
+import { ReadyManager } from "./ReadyManager";
+import type { ModeSelectionState, GameModeId } from "@/modes/types";
 
 export interface OrchestratorState extends RoomManagerState {
   peerStatus: PeerStatus;
   messages: ChatMessage[];
   strokes: StrokeData[];
+  modeSelection: ModeSelectionState;
+  readyPlayers: string[];
 }
 
 export type StateListener = () => void;
@@ -24,12 +29,16 @@ const INITIAL_STATE: OrchestratorState = {
   peerStatus: "idle",
   messages: [],
   strokes: [],
+  modeSelection: { type: "none" },
+  readyPlayers: [],
 };
 
 export class RoomOrchestrator {
   private roomManager: RoomManager;
   private peerManager: PeerManager | null = null;
   private chatManager: ChatManager | null = null;
+  private voteManager: VoteManager | null = null;
+  private readyManager: ReadyManager | null = null;
   private _state: OrchestratorState = { ...INITIAL_STATE };
   private stateListeners = new Set<StateListener>();
   private cleanupFns: (() => void)[] = [];
@@ -73,10 +82,14 @@ export class RoomOrchestrator {
     this.unsubPeerStatus = null;
     this.chatManager?.destroy();
     this.chatManager = null;
+    this.voteManager?.destroy();
+    this.voteManager = null;
+    this.readyManager?.destroy();
+    this.readyManager = null;
     this.peerManager?.destroy();
     this.peerManager = null;
     this.snapshotSent = false;
-    this.setState({ peerStatus: "idle" });
+    this.setState({ peerStatus: "idle", modeSelection: { type: "none" } });
   }
 
   private async retryWithVerification() {
@@ -264,6 +277,36 @@ export class RoomOrchestrator {
       this.setState({ messages: this.chatManager.messages });
     }
 
+    if (peerStatus === "connected" && !this.voteManager) {
+      this.voteManager = new VoteManager(
+        this.peerManager,
+        this.roomManager.state.myId ?? "",
+        this._state.modeSelection,
+      );
+      this.voteManager.attach();
+      this.cleanupFns.push(
+        this.voteManager.subscribe(() => {
+          this.setState({ modeSelection: this.voteManager?.modeSelection ?? { type: "none" } });
+        })
+      );
+      this.setState({ modeSelection: this.voteManager.modeSelection });
+    }
+
+    if (peerStatus === "connected" && !this.readyManager) {
+      this.readyManager = new ReadyManager(
+        this.peerManager,
+        this.roomManager.state.myId ?? "",
+        this._state.readyPlayers,
+      );
+      this.readyManager.attach();
+      this.cleanupFns.push(
+        this.readyManager.subscribe(() => {
+          this.setState({ readyPlayers: this.readyManager?.readyPlayers ?? [] });
+        })
+      );
+      this.setState({ readyPlayers: this.readyManager.readyPlayers });
+    }
+
     if (peerStatus === "connected" && !this.snapshotSent) {
       const { myId, hostId } = this.roomManager.state;
       const isHost = !!myId && !!hostId && myId === hostId;
@@ -358,6 +401,34 @@ export class RoomOrchestrator {
     this.setState({ strokes: [] });
   }
 
+  startVote(candidates: GameModeId[]) {
+    this.voteManager?.startVote(candidates);
+  }
+
+  castVote(mode: GameModeId) {
+    this.voteManager?.castVote(mode);
+  }
+
+  endVote() {
+    this.voteManager?.endVote();
+  }
+
+  hostSelectMode(mode: GameModeId) {
+    this.voteManager?.hostSelectMode(mode);
+  }
+
+  changeMode() {
+    this.voteManager?.changeMode();
+  }
+
+  toggleReady() {
+    this.readyManager?.toggleReady();
+  }
+
+  startGame() {
+    console.log("[Orchestrator] startGame — not implemented yet");
+  }
+
   destroy() {
     this.socket.off("signal", this.onIncomingSignal);
     this.socket.off("hostChanged", this.onHostChanged);
@@ -367,6 +438,8 @@ export class RoomOrchestrator {
     this.unsubPeerStatus?.();
     this.unsubPeerStatus = null;
     this.chatManager?.destroy();
+    this.voteManager?.destroy();
+    this.readyManager?.destroy();
     this.peerManager?.destroy();
     this.snapshotSent = false;
     this.cleanupFns.forEach((fn) => fn());

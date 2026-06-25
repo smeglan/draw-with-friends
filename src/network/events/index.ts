@@ -36,7 +36,13 @@ export type DataChannelMessage =
   | { type: "stroke"; payload: StrokeData }
   | { type: "snapshot"; payload: { strokes: StrokeData[]; timestamp: number; playerId: string } }
   | { type: "undo"; payload: { playerId: string; timestamp: number } }
-  | { type: "clear"; payload: { playerId: string; timestamp: number } };
+  | { type: "clear"; payload: { playerId: string; timestamp: number } }
+  | { type: "vote_started"; payload: { candidates: string[] } }
+  | { type: "vote_cast"; payload: { playerId: string; mode: string } }
+  | { type: "vote_ended"; payload: { winner: string } }
+  | { type: "mode_selected"; payload: { mode: string } }
+  | { type: "mode_reset"; payload: Record<string, never> }
+  | { type: "ready_change"; payload: { playerId: string; ready: boolean } };
 
 export interface SignalPayload {
   targetId: string;

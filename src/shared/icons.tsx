@@ -28,7 +28,9 @@ export type IconName =
   | "arrowLeft"
   | "crown"
   | "combine"
-  | "check";
+  | "check"
+  | "phone"
+  | "helpCircle";
 
 type IconProps = {
   name: IconName;
@@ -231,6 +233,18 @@ const ICON_MAP: Record<IconName, (props: { className?: string }) => React.ReactN
   check: () => (
     <IconSvg className="h-3.5 w-3.5">
       <polyline points="4 12 9 17 20 6" />
+    </IconSvg>
+  ),
+  phone: () => (
+    <IconSvg className="h-5 w-5">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </IconSvg>
+  ),
+  helpCircle: () => (
+    <IconSvg className="h-5 w-5">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </IconSvg>
   ),
 };

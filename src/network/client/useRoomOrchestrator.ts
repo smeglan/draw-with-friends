@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useSocket } from "./SocketProvider";
 import { RoomOrchestrator, type OrchestratorState } from "./RoomOrchestrator";
 import type { StrokeData } from "@/network/events";
+import type { GameModeId } from "@/modes/types";
 
 const INITIAL: OrchestratorState = {
   players: [],
@@ -15,6 +16,8 @@ const INITIAL: OrchestratorState = {
   peerStatus: "idle",
   messages: [],
   strokes: [],
+  modeSelection: { type: "none" },
+  readyPlayers: [],
 };
 
 export function useRoomOrchestrator(
@@ -66,5 +69,48 @@ export function useRoomOrchestrator(
     orchRef.current?.leaveRoom();
   }, []);
 
-  return { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom, orchRef };
+  const startVote = useCallback((candidates: GameModeId[]) => {
+    orchRef.current?.startVote(candidates);
+  }, []);
+
+  const castVote = useCallback((mode: GameModeId) => {
+    orchRef.current?.castVote(mode);
+  }, []);
+
+  const endVote = useCallback(() => {
+    orchRef.current?.endVote();
+  }, []);
+
+  const hostSelectMode = useCallback((mode: GameModeId) => {
+    orchRef.current?.hostSelectMode(mode);
+  }, []);
+
+  const changeMode = useCallback(() => {
+    orchRef.current?.changeMode();
+  }, []);
+
+  const toggleReady = useCallback(() => {
+    orchRef.current?.toggleReady();
+  }, []);
+
+  const startGame = useCallback(() => {
+    orchRef.current?.startGame();
+  }, []);
+
+  return {
+    state,
+    sendChat,
+    sendStroke,
+    sendUndo,
+    sendClear,
+    leaveRoom,
+    startVote,
+    castVote,
+    endVote,
+    hostSelectMode,
+    changeMode,
+    toggleReady,
+    startGame,
+    orchRef,
+  };
 }

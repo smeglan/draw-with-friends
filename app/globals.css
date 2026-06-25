@@ -40,3 +40,14 @@ textarea {
 ::selection {
   background: rgba(103, 232, 249, 0.3);
 }
+
+@keyframes morph {
+  0%, 100% { border-radius: 12px; width: 75%; opacity: 0.6; }
+  25% { border-radius: 999px; width: 50%; opacity: 1; }
+  50% { border-radius: 8px; width: 85%; opacity: 0.7; }
+  75% { border-radius: 16px; width: 60%; opacity: 1; }
+}
+
+.morph-rectangle {
+  animation: morph 3s ease-in-out infinite;
+}

@@ -11,6 +11,7 @@ import { PlayerSidebar } from "@/rooms/components/organisms/PlayerSidebar";
 import { RoomCanvas } from "@/rooms/components/organisms/RoomCanvas";
 import { ChatBox } from "@/network/client/components/ChatBox";
 import { useRoomOrchestrator } from "@/network/client/useRoomOrchestrator";
+import { getAvailableModes } from "@/modes/registry";
 import { getRoomPassword } from "@/shared/utils/roomPasswordStorage";
 
 type Props = {
@@ -21,7 +22,7 @@ export function RoomTemplate({ roomId }: Props) {
   const t = useTranslations();
   const { username, setUsername } = useUsername();
   const [roomPassword] = useState(() => getRoomPassword(roomId));
-  const { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom } = useRoomOrchestrator(
+  const { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom, startVote, castVote, endVote, hostSelectMode, changeMode, toggleReady, startGame } = useRoomOrchestrator(
     roomId,
     username,
     roomPassword,
@@ -122,6 +123,17 @@ export function RoomTemplate({ roomId }: Props) {
             isConnected={state.isConnected}
             peerStatus={state.peerStatus}
             roomId={roomId}
+            myId={state.myId}
+            isHost={isHost}
+            modeSelection={state.modeSelection}
+            readyPlayers={state.readyPlayers}
+            onStartVote={() => startVote(getAvailableModes(state.players.length).map((m) => m.id))}
+            onVote={castVote}
+            onEndVote={endVote}
+            onHostSelect={hostSelectMode}
+            onChangeMode={changeMode}
+            onToggleReady={toggleReady}
+            onStartGame={startGame}
           />
 
           <RoomCanvas

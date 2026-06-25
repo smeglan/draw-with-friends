@@ -277,6 +277,39 @@
     "placeholder": "Your name",
     "confirm": "Confirm"
   },
+  "modes": {
+    "heading": "Game Mode",
+    "select": "Select",
+    "hostPicking": "Pick a mode to start",
+    "hostChoosing": "The host is choosing a mode...",
+    "startVote": "Start Vote",
+    "endVote": "End Vote",
+    "changeMode": "Change Mode",
+    "waitingHost": "Waiting for the host to set up the game mode...",
+    "voteTitle": "Vote Active",
+    "voteFor": "Vote",
+    "voted": "Voted",
+    "readyCount": "{ready}/{total} ready",
+    "startConfirm": "Still {count} player{count, plural, one {} other {s}} not ready. Start anyway?",
+    "startConfirmYes": "Yes, start",
+    "startConfirmNo": "No, wait",
+    "masterpiece": {
+      "name": "Masterpiece",
+      "description": "Everyone draws on a theme. Vote and see the rankings."
+    },
+    "fusion": {
+      "name": "Fusion",
+      "description": "Two rounds: draw base characters, then fuse them together."
+    },
+    "telephone": {
+      "name": "Telephone",
+      "description": "Chain of drawing and description. Laugh at the final result."
+    },
+    "pictionary": {
+      "name": "Pictionary",
+      "description": "One draws, the others guess. Points for speed."
+    }
+  },
   "errors": {
     "noFileSelected": "No file was selected",
     "invalidProject": "The file is not a valid project",

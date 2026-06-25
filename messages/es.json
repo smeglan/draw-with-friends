@@ -282,6 +282,39 @@
     "placeholder": "Tu nombre",
     "confirm": "Confirmar"
   },
+  "modes": {
+    "heading": "Modo de juego",
+    "select": "Elegir",
+    "hostPicking": "Elegí un modo para empezar",
+    "hostChoosing": "El anfitrión está eligiendo modo...",
+    "startVote": "Iniciar votación",
+    "endVote": "Finalizar votación",
+    "changeMode": "Cambiar modo",
+    "waitingHost": "Esperando que el host configure el modo de juego...",
+    "voteTitle": "Votación activa",
+    "voteFor": "Votar",
+    "voted": "Votado",
+    "readyCount": "{ready}/{total} listos",
+    "startConfirm": "Falta {count} jugador{count, plural, one {} other {es}}. ¿Empezar de todas formas?",
+    "startConfirmYes": "Sí, empezar",
+    "startConfirmNo": "No, esperar",
+    "masterpiece": {
+      "name": "Obra maestra",
+      "description": "Todos dibujan sobre una temática. Votación y ranking final."
+    },
+    "fusion": {
+      "name": "Fusión",
+      "description": "Dos rondas: dibujá personajes base, después fusionálos."
+    },
+    "telephone": {
+      "name": "Teléfono roto",
+      "description": "Cadena de dibujo y descripción. Reíte del resultado final."
+    },
+    "pictionary": {
+      "name": "Pinturillo",
+      "description": "Uno dibuja, los otros adivinan. Puntos por velocidad."
+    }
+  },
   "errors": {
     "noFileSelected": "No se seleccionó ningún archivo",
     "invalidProject": "El archivo no es un proyecto válido",

@@ -55,7 +55,7 @@ export function ChatBox({ messages, onSend, isConnected, currentUsername, hostUs
     <div className="flex h-full flex-col rounded-xl border border-white/10 bg-white/5">
       <div className="border-b border-white/10 px-4 py-2">
         <p className="text-xs font-medium text-slate-400">
-          {t("chat.title")} {isConnected ? t("chat.connected") : t("chat.disconnected")}
+          {t("chat.title", { status: isConnected ? t("chat.connected") : t("chat.disconnected") })}
         </p>
       </div>
 
