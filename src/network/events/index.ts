@@ -31,6 +31,21 @@ export type StrokeData = {
   opacity: number;
 };
 
+export type TelephoneChainLink =
+  | { kind: "phrase"; content: string; authorId: string }
+  | { kind: "drawing"; content: StrokeData[]; authorId: string }
+  | { kind: "description"; content: string; authorId: string };
+
+export type GamePhase = "lobby" | "playing" | "results";
+
+export type TelephonePhase =
+  | { type: "idle" }
+  | { type: "writing_phrase" }
+  | { type: "drawing"; prompt: { kind: "phrase" | "description"; content: string } }
+  | { type: "describing"; prompt: { kind: "drawing"; content: StrokeData[] } }
+  | { type: "waiting" }
+  | { type: "reveal" };
+
 export type DataChannelMessage =
   | { type: "chat"; payload: ChatMessage }
   | { type: "stroke"; payload: StrokeData }
@@ -42,7 +57,21 @@ export type DataChannelMessage =
   | { type: "vote_ended"; payload: { winner: string } }
   | { type: "mode_selected"; payload: { mode: string } }
   | { type: "mode_reset"; payload: Record<string, never> }
-  | { type: "ready_change"; payload: { playerId: string; ready: boolean } };
+  | { type: "ready_change"; payload: { playerId: string; ready: boolean } }
+  | { type: "game_start"; payload: { mode: string; config: Record<string, unknown> } }
+  | { type: "game_phase"; payload: { phase: GamePhase } }
+  | { type: "game_end"; payload: { reason: string } }
+  | { type: "telephone_phase"; payload: { phase: string; round?: number; totalRounds?: number; phaseEndsAt?: number } }
+  | { type: "telephone_phrase_submit"; payload: { phrase: string } }
+  | { type: "telephone_drawing_submit"; payload: { strokes: StrokeData[] } }
+  | { type: "telephone_description_submit"; payload: { text: string } }
+  | { type: "telephone_assigned"; payload: { kind: "phrase" | "drawing" | "description"; content: unknown } }
+  | { type: "telephone_reveal"; payload: { chains: TelephoneChainLink[][] } }
+  | { type: "telephone_all_submitted"; payload: { phase: string } }
+  | { type: "telephone_config"; payload: { totalRounds: number } }
+  | { type: "masterpiece_phase"; payload: { phase: string; prompt?: string; submissions?: { playerId: string; strokes: StrokeData[] }[]; rankings?: { playerId: string; votes: number }[]; phaseEndsAt?: number } }
+  | { type: "masterpiece_drawing_submit"; payload: { strokes: StrokeData[] } }
+  | { type: "masterpiece_vote_submit"; payload: { targetPlayerId: string } };
 
 export interface SignalPayload {
   targetId: string;

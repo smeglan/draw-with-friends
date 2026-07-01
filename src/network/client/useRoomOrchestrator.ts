@@ -18,6 +18,26 @@ const INITIAL: OrchestratorState = {
   strokes: [],
   modeSelection: { type: "none" },
   readyPlayers: [],
+  gamePhase: "lobby",
+  telephone: {
+    phase: { type: "idle" },
+    currentRound: 0,
+    totalRounds: 4,
+    phaseEndsAt: null,
+    assignedPrompt: null,
+    chains: null,
+    submittedPlayerIds: [],
+  },
+  masterpiece: {
+    phase: { type: "idle" },
+    prompt: "",
+    submissions: [],
+    submittedPlayerIds: [],
+    votedPlayerIds: [],
+    votes: {},
+    rankings: null,
+    phaseEndsAt: null,
+  },
 };
 
 export function useRoomOrchestrator(
@@ -97,6 +117,38 @@ export function useRoomOrchestrator(
     orchRef.current?.startGame();
   }, []);
 
+  const restartGame = useCallback(() => {
+    orchRef.current?.restartGame();
+  }, []);
+
+  const telephoneSubmitPhrase = useCallback((phrase: string) => {
+    orchRef.current?.telephoneSubmitPhrase(phrase);
+  }, []);
+
+  const telephoneSubmitDrawing = useCallback((strokes: StrokeData[]) => {
+    orchRef.current?.telephoneSubmitDrawing(strokes);
+  }, []);
+
+  const telephoneSubmitDescription = useCallback((text: string) => {
+    orchRef.current?.telephoneSubmitDescription(text);
+  }, []);
+
+  const setTelephoneRounds = useCallback((rounds: number) => {
+    orchRef.current?.setTelephoneRounds(rounds);
+  }, []);
+
+  const masterpieceSubmitDrawing = useCallback((strokes: StrokeData[]) => {
+    orchRef.current?.masterpieceSubmitDrawing(strokes);
+  }, []);
+
+  const masterpieceSubmitVote = useCallback((targetPlayerId: string) => {
+    orchRef.current?.masterpieceSubmitVote(targetPlayerId);
+  }, []);
+
+  const setMasterpiecePrompt = useCallback((prompt: string) => {
+    orchRef.current?.setMasterpiecePrompt(prompt);
+  }, []);
+
   return {
     state,
     sendChat,
@@ -111,6 +163,14 @@ export function useRoomOrchestrator(
     changeMode,
     toggleReady,
     startGame,
+    restartGame,
+    telephoneSubmitPhrase,
+    telephoneSubmitDrawing,
+    telephoneSubmitDescription,
+    setTelephoneRounds,
+    masterpieceSubmitDrawing,
+    masterpieceSubmitVote,
+    setMasterpiecePrompt,
     orchRef,
   };
 }

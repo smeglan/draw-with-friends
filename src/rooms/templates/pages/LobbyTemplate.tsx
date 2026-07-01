@@ -5,14 +5,14 @@ import { useTranslations } from "next-intl";
 import { Icon } from "@/shared/icons";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
-import { useLobby } from "@/rooms/hooks/useLobby";
+import { useRoomActions } from "@/rooms/hooks/useRoomActions";
 import { LobbyActions } from "@/rooms/components/organisms/LobbyActions";
 import { useState } from "react";
 
 export function LobbyTemplate() {
   const t = useTranslations();
   const { username, setUsername } = useUsername();
-  const { createRoom, joinRoom, error, isLoading } = useLobby();
+  const { createRoom, joinRoom, error, isLoading } = useRoomActions();
   const [dismissed, setDismissed] = useState(false);
 
   const showPrompt = !username && !dismissed;

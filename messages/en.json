@@ -26,7 +26,8 @@
     "exitFullscreen": "Exit fullscreen",
     "waiting": "Waiting...",
     "connected": "Connected",
-    "disconnected": "Disconnected"
+    "disconnected": "Disconnected",
+    "you": "You"
   },
   "landing": {
     "hero": {
@@ -164,21 +165,6 @@
     "moveUp": "Move up",
     "moveDown": "Move down"
   },
-  "presets": {
-    "vga": "VGA",
-    "svga": "SVGA",
-    "wide": "Wide",
-    "mobile": "Mobile",
-    "post": "Post",
-    "story": "Story",
-    "reels": "Reels",
-    "phoneXl": "Phone XL",
-    "hd": "HD",
-    "fhd": "Full HD",
-    "qhd": "2K",
-    "square": "Square",
-    "vertical": "Vertical"
-  },
   "export": {
     "png": "PNG",
     "pngDescription": "Best for transparency and quality",
@@ -186,9 +172,6 @@
     "jpegDescription": "Lightweight for sharing",
     "webp": "WEBP",
     "webpDescription": "Great balance between size and quality"
-  },
-  "project": {
-    "defaultFilename": "drawing"
   },
   "room": {
     "heading": "Rooms",
@@ -249,7 +232,11 @@
       "p2pLost": "P2P connection lost",
       "p2pError": "P2P connection error",
       "readyCheck": "✓ Ready",
-      "ready": "Ready"
+      "ready": "Ready",
+      "gameInProgress": "Game in progress",
+      "gameEnded": "Game ended",
+      "waitingRestart": "Waiting for host to restart...",
+      "restart": "Back to lobby"
     }
   },
   "chat": {
@@ -265,11 +252,6 @@
     "connected": "Connected",
     "disconnected": "Disconnected",
     "send": "Send"
-  },
-  "name": {
-    "prompt": "What's your name?",
-    "description": "Choose a name to use in the app",
-    "placeholder": "Your name"
   },
   "namePrompt": {
     "title": "What's your name?",
@@ -310,11 +292,42 @@
       "description": "One draws, the others guess. Points for speed."
     }
   },
-  "errors": {
-    "noFileSelected": "No file was selected",
-    "invalidProject": "The file is not a valid project",
-    "cannotReadFile": "Could not read the file",
-    "socketProviderMissing": "useSocket must be used inside <SocketProvider>",
-    "usernameProviderMissing": "useUsername must be used inside <UsernameProvider>"
+  "telephone": {
+    "phrasePrompt": "Write a short phrase",
+    "phraseHint": "It can be anything: a sentence, a quote, or something random.",
+    "phrasePlaceholder": "Write your phrase here...",
+    "descriptionPrompt": "Describe what you see in the drawing",
+    "descriptionHint": "Be as detailed or as vague as you want. The next person will draw based on your description.",
+    "descriptionPlaceholder": "Describe the drawing...",
+    "submit": "Submit",
+    "submitDrawing": "Submit Drawing",
+    "waitingTitle": "Waiting for other players...",
+    "waitingPlayers": "Waiting for {count} more player{count, plural, one {} other {s}}...",
+    "waitingHost": "All submitted! Waiting for the host to advance...",
+    "submitted": "submitted",
+    "revealTitle": "Chain Reveal",
+    "revealSubtitle": "See how each phrase transformed through the chain!",
+    "phasePhrase": "Write a phrase",
+    "phaseDrawing": "Draw",
+    "phaseDescribing": "Describe",
+    "roundIndicator": "Round {round}/{total}",
+    "drawingPhrasePrompt": "Draw this phrase:",
+    "drawingDescPrompt": "Draw this description:",
+    "setRounds": "Rounds per game",
+    "timeLeft": "Time left: {time}"
+  },
+  "masterpiece": {
+    "promptPlaceholder": "Enter a theme or leave blank for random...",
+    "promptHint": "Or leave blank for a random theme",
+    "waitingPrompt": "Waiting for the host to set the theme...",
+    "waitingTitle": "Waiting for others to finish...",
+    "creatingTitle": "Your masterpiece",
+    "votingTitle": "Vote for the best masterpiece!",
+    "votingHint": "Tap on a drawing to cast your vote (you can't vote for yourself)",
+    "votedLabel": "✓ Voted",
+    "votedFor": "You voted for {name}",
+    "resultsTitle": "Final Ranking",
+    "resultsSubtitle": "How the votes turned out",
+    "voteCount": "{count} vote{count, plural, one {} other {s}}"
   }
 }

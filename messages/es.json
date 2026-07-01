@@ -26,7 +26,8 @@
     "exitFullscreen": "Salir de pantalla completa",
     "waiting": "Esperando...",
     "connected": "Conectado",
-    "disconnected": "Desconectado"
+    "disconnected": "Desconectado",
+    "you": "Tú"
   },
   "landing": {
     "hero": {
@@ -164,21 +165,6 @@
     "moveUp": "Subir capa",
     "moveDown": "Bajar capa"
   },
-  "presets": {
-    "vga": "VGA",
-    "svga": "SVGA",
-    "wide": "Wide",
-    "mobile": "Mobile",
-    "post": "Post",
-    "story": "Story",
-    "reels": "Reels",
-    "phoneXl": "Phone XL",
-    "hd": "HD",
-    "fhd": "Full HD",
-    "qhd": "2K",
-    "square": "Cuadrado",
-    "vertical": "Vertical"
-  },
   "export": {
     "png": "PNG",
     "pngDescription": "Ideal para transparencia y calidad",
@@ -186,9 +172,6 @@
     "jpegDescription": "Ligero para compartir",
     "webp": "WEBP",
     "webpDescription": "Buen balance entre peso y calidad"
-  },
-  "project": {
-    "defaultFilename": "dibujo"
   },
   "room": {
     "heading": "Salas",
@@ -254,7 +237,11 @@
       "p2pLost": "Conexión P2P perdida",
       "p2pError": "Error en conexión P2P",
       "readyCheck": "✓ Listo",
-      "ready": "Listo"
+      "ready": "Listo",
+      "gameInProgress": "Partida en curso",
+      "gameEnded": "Partida terminada",
+      "waitingRestart": "Esperando que el host reinicie...",
+      "restart": "Volver al lobby"
     }
   },
   "chat": {
@@ -270,11 +257,6 @@
     "connected": "Conectado",
     "disconnected": "Desconectado",
     "send": "Enviar"
-  },
-  "name": {
-    "prompt": "¿Cómo te llamás?",
-    "description": "Elegí un nombre para usar en la aplicación",
-    "placeholder": "Tu nombre"
   },
   "namePrompt": {
     "title": "¿Cómo te llamás?",
@@ -315,11 +297,42 @@
       "description": "Uno dibuja, los otros adivinan. Puntos por velocidad."
     }
   },
-  "errors": {
-    "noFileSelected": "No se seleccionó ningún archivo",
-    "invalidProject": "El archivo no es un proyecto válido",
-    "cannotReadFile": "No se pudo leer el archivo",
-    "socketProviderMissing": "useSocket debe usarse dentro de <SocketProvider>",
-    "usernameProviderMissing": "useUsername debe usarse dentro de <UsernameProvider>"
+  "telephone": {
+    "phrasePrompt": "Escribí una frase corta",
+    "phraseHint": "Puede ser cualquier cosa: una oración, una cita, o algo random.",
+    "phrasePlaceholder": "Escribí tu frase acá...",
+    "descriptionPrompt": "Describí lo que ves en el dibujo",
+    "descriptionHint": "Tan detallado o vago como quieras. La próxima persona va a dibujar según tu descripción.",
+    "descriptionPlaceholder": "Describí el dibujo...",
+    "submit": "Enviar",
+    "submitDrawing": "Enviar dibujo",
+    "waitingTitle": "Esperando otros jugadores...",
+    "waitingPlayers": "Esperando {count} jugador{count, plural, one {} other {es}} más...",
+    "waitingHost": "¡Todos enviaron! Esperando al host...",
+    "submitted": "enviaron",
+    "revealTitle": "Revelación de cadenas",
+    "revealSubtitle": "¡Mirá cómo se transformó cada frase a través de la cadena!",
+    "phasePhrase": "Escribí una frase",
+    "phaseDrawing": "Dibujá",
+    "phaseDescribing": "Describí",
+    "roundIndicator": "Ronda {round}/{total}",
+    "drawingPhrasePrompt": "Dibujá esta frase:",
+    "drawingDescPrompt": "Dibujá esta descripción:",
+    "setRounds": "Rondas por partida",
+    "timeLeft": "Tiempo restante: {time}"
+  },
+  "masterpiece": {
+    "promptPlaceholder": "Ingresá una temática o dejá vacío para random...",
+    "promptHint": "O dejá vacío para una temática aleatoria",
+    "waitingPrompt": "Esperando que el host configure la temática...",
+    "waitingTitle": "Esperando que los demás terminen...",
+    "creatingTitle": "Tu obra maestra",
+    "votingTitle": "¡Votá la mejor obra maestra!",
+    "votingHint": "Tocá un dibujo para votar (no podés votarte a vos mismo)",
+    "votedLabel": "✓ Votado",
+    "votedFor": "Votaste a {name}",
+    "resultsTitle": "Ranking final",
+    "resultsSubtitle": "Cómo quedaron los votos",
+    "voteCount": "{count} voto{count, plural, one {} other {s}}"
   }
 }

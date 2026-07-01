@@ -9,7 +9,7 @@ import type { RoomInfo } from "@/network/events";
 
 type Action = "create" | "join" | null;
 
-export function useLanding() {
+export function useRoomActions() {
   const router = useRouter();
   const { socket } = useSocket();
   const { username } = useUsername();

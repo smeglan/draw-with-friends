@@ -116,17 +116,14 @@ export class VoteManager {
       return;
     }
 
+    const votes = Object.values(this._modeSelection.votes);
     const counts = new Map<GameModeId, number>();
-    let winner: GameModeId = Object.values(this._modeSelection.votes)[0];
-    let max = 0;
-    for (const mode of Object.values(this._modeSelection.votes)) {
-      const count = (counts.get(mode) ?? 0) + 1;
-      counts.set(mode, count);
-      if (count > max) {
-        max = count;
-        winner = mode;
-      }
+    for (const mode of votes) {
+      counts.set(mode, (counts.get(mode) ?? 0) + 1);
     }
+    const max = Math.max(...counts.values(), 0);
+    const tied = Array.from(counts.entries()).filter(([, c]) => c === max);
+    const winner = tied[0][0];
 
     const envelope: DataChannelMessage = { type: "vote_ended", payload: { winner } };
     this.peer.send(JSON.stringify(envelope));

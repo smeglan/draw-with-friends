@@ -13,6 +13,9 @@ import { ChatBox } from "@/network/client/components/ChatBox";
 import { useRoomOrchestrator } from "@/network/client/useRoomOrchestrator";
 import { getAvailableModes } from "@/modes/registry";
 import { getRoomPassword } from "@/shared/utils/roomPasswordStorage";
+import { TelephoneGameView } from "@/modes/telephone/components/TelephoneGameView";
+import { MasterpieceGameView } from "@/modes/masterpiece/components/MasterpieceGameView";
+import type { GameModeId } from "@/modes/types";
 
 type Props = {
   roomId: string;
@@ -22,7 +25,13 @@ export function RoomTemplate({ roomId }: Props) {
   const t = useTranslations();
   const { username, setUsername } = useUsername();
   const [roomPassword] = useState(() => getRoomPassword(roomId));
-  const { state, sendChat, sendStroke, sendUndo, sendClear, leaveRoom, startVote, castVote, endVote, hostSelectMode, changeMode, toggleReady, startGame } = useRoomOrchestrator(
+  const {
+    state, sendChat, sendStroke, sendUndo, sendClear,
+    leaveRoom, startVote, castVote, endVote, hostSelectMode,
+    changeMode, toggleReady, startGame, restartGame,
+    telephoneSubmitPhrase, telephoneSubmitDrawing, telephoneSubmitDescription,
+    masterpieceSubmitDrawing, masterpieceSubmitVote, setMasterpiecePrompt,
+  } = useRoomOrchestrator(
     roomId,
     username,
     roomPassword,
@@ -39,6 +48,14 @@ export function RoomTemplate({ roomId }: Props) {
   const showChat = state.isJoined && state.players.length >= 2;
   const hostUsername = state.players.find((p) => p.id === state.hostId)?.username ?? null;
   const isHost = state.myId !== null && state.hostId !== null && state.myId === state.hostId;
+
+  const activeMode: GameModeId | null =
+    state.modeSelection.type === "host_picked" || state.modeSelection.type === "voting_complete"
+      ? state.modeSelection.mode
+      : null;
+
+  const isTelephonePlaying = state.gamePhase === "playing" && activeMode === "telephone";
+  const isMasterpiecePlaying = state.gamePhase === "playing" && activeMode === "masterpiece";
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(roomId);
@@ -60,6 +77,30 @@ export function RoomTemplate({ roomId }: Props) {
   const handleStrokeComplete = useCallback((strokeData: Parameters<typeof sendStroke>[0]) => {
     sendStroke(strokeData);
   }, [sendStroke]);
+
+  const handleSubmitPhrase = useCallback((phrase: string) => {
+    telephoneSubmitPhrase(phrase);
+  }, [telephoneSubmitPhrase]);
+
+  const handleSubmitDrawing = useCallback((strokes: Parameters<typeof telephoneSubmitDrawing>[0]) => {
+    telephoneSubmitDrawing(strokes);
+  }, [telephoneSubmitDrawing]);
+
+  const handleSubmitDescription = useCallback((text: string) => {
+    telephoneSubmitDescription(text);
+  }, [telephoneSubmitDescription]);
+
+  const handleMasterpieceDrawing = useCallback((strokes: Parameters<typeof masterpieceSubmitDrawing>[0]) => {
+    masterpieceSubmitDrawing(strokes);
+  }, [masterpieceSubmitDrawing]);
+
+  const handleMasterpieceVote = useCallback((targetPlayerId: string) => {
+    masterpieceSubmitVote(targetPlayerId);
+  }, [masterpieceSubmitVote]);
+
+  const handleRestartGame = useCallback(() => {
+    restartGame();
+  }, [restartGame]);
 
   return (
     <>
@@ -134,17 +175,73 @@ export function RoomTemplate({ roomId }: Props) {
             onChangeMode={changeMode}
             onToggleReady={toggleReady}
             onStartGame={startGame}
+            gamePhase={state.gamePhase}
           />
 
-          <RoomCanvas
-            strokes={state.strokes}
-            onStrokeComplete={handleStrokeComplete}
-            myId={state.myId}
-            hostId={state.hostId}
-            onUndo={sendUndo}
-            onClear={sendClear}
-            peerStatus={state.peerStatus}
-          />
+          {state.gamePhase === "results" ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+              <p className="text-lg font-medium text-white">{t("room.sidebar.gameEnded")}</p>
+              {isHost && (
+                <button
+                  type="button"
+                  onClick={handleRestartGame}
+                  className="rounded-xl bg-cyan-500 px-6 py-3 font-medium text-white transition hover:bg-cyan-400"
+                >
+                  {t("room.sidebar.restart")}
+                </button>
+              )}
+              {!isHost && (
+                <p className="text-sm text-slate-400">{t("room.sidebar.waitingRestart")}</p>
+              )}
+            </div>
+          ) : isTelephonePlaying ? (
+            <TelephoneGameView
+              telephone={state.telephone}
+              players={state.players}
+              myId={state.myId}
+              onSubmitPhrase={handleSubmitPhrase}
+              onSubmitDrawing={handleSubmitDrawing}
+              onSubmitDescription={handleSubmitDescription}
+            />
+          ) : isMasterpiecePlaying ? (
+            <MasterpieceGameView
+              masterpiece={state.masterpiece}
+              players={state.players}
+              myId={state.myId}
+              onSubmitDrawing={handleMasterpieceDrawing}
+              onSubmitVote={handleMasterpieceVote}
+            />
+          ) : (
+            <div className="flex flex-1 flex-col">
+              {activeMode === "masterpiece" && state.gamePhase === "lobby" && (
+                <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3">
+                  {isHost ? (
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={state.masterpiece.prompt}
+                        onChange={(e) => setMasterpiecePrompt(e.target.value)}
+                        placeholder={t("masterpiece.promptPlaceholder")}
+                        className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50"
+                      />
+                      <p className="shrink-0 text-[11px] text-slate-500">{t("masterpiece.promptHint")}</p>
+                    </div>
+                  ) : (
+                    <p className="text-center text-sm text-slate-400">{t("masterpiece.waitingPrompt")}</p>
+                  )}
+                </div>
+              )}
+              <RoomCanvas
+                strokes={state.strokes}
+                onStrokeComplete={handleStrokeComplete}
+                myId={state.myId}
+                hostId={state.hostId}
+                onUndo={sendUndo}
+                onClear={sendClear}
+                peerStatus={state.peerStatus}
+              />
+            </div>
+          )}
 
           {showChat && (
             <div className="w-full shrink-0 border-t border-white/10 lg:w-80 lg:border-l lg:border-t-0">

@@ -7,7 +7,7 @@ import { HeroTitle } from "@/landing/components/atoms/HeroTitle";
 import { UsernameBadge } from "@/landing/components/atoms/UsernameBadge";
 import { ActionCards } from "@/landing/components/molecules/ActionCards";
 import { Icon } from "@/shared/icons";
-import { useLanding } from "@/landing/hooks/useLanding";
+import { useRoomActions } from "@/rooms/hooks/useRoomActions";
 import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
 import { LocaleSwitcher } from "@/shared/components/LocaleSwitcher";
@@ -15,7 +15,7 @@ import { LocaleSwitcher } from "@/shared/components/LocaleSwitcher";
 export function LandingHero() {
   const t = useTranslations();
   const { username, setUsername } = useUsername();
-  const { createRoom, joinRoom, error, isLoading } = useLanding();
+  const { createRoom, joinRoom, error, isLoading } = useRoomActions();
   const router = useRouter();
   const [showNamePrompt, setShowNamePrompt] = useState(false);
 
