@@ -22,7 +22,7 @@ export function ModeSelector({ playerCount, onSelect, onStartVote }: Props) {
           <ModeCard
             key={mode.id}
             mode={mode}
-            disabled={playerCount < mode.minPlayers}
+            playerCount={playerCount}
             actionLabel={t("modes.select")}
             onAction={onSelect}
           />

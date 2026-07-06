@@ -15,6 +15,7 @@ export type ToolContext = {
   setActiveTool: (tool: DrawingTool) => void;
   redrawCanvas: () => void;
   renderStrokeSegment: (from: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => void;
+  renderStrokeCurveSegment: (from: Point, control: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => void;
   renderStrokeDot: (point: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => void;
   activeLayerId: string;
 };

@@ -267,6 +267,7 @@
     "startVote": "Start Vote",
     "endVote": "End Vote",
     "changeMode": "Change Mode",
+    "needsPlayers": "Needs {count}",
     "waitingHost": "Waiting for the host to set up the game mode...",
     "voteTitle": "Vote Active",
     "voteFor": "Vote",

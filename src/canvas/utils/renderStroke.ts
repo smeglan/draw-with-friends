@@ -66,6 +66,34 @@ export function renderStrokeSegment(
   ctx.restore();
 }
 
+export function renderStrokeCurveSegment(
+  ctx: CanvasRenderingContext2D,
+  from: Point,
+  control: Point,
+  to: Point,
+  stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">,
+  canvasScale: number,
+) {
+  ctx.save();
+  ctx.globalAlpha = (stroke.opacity ?? 100) / 100;
+  ctx.globalCompositeOperation =
+    stroke.tool === "eraser" ? "destination-out" : "source-over";
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size * canvasScale;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(from.x * canvasScale, from.y * canvasScale);
+  ctx.quadraticCurveTo(
+    control.x * canvasScale,
+    control.y * canvasScale,
+    to.x * canvasScale,
+    to.y * canvasScale,
+  );
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function renderStrokeDot(
   ctx: CanvasRenderingContext2D,
   point: Point,

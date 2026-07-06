@@ -4,12 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import type { Player, GamePhase } from "@/network/events";
 import type { PeerStatus } from "@/network/client/PeerManager";
-import type { ModeSelectionState, GameModeId } from "@/modes/types";
+import type { ModeSelectionState } from "@/modes/types";
+import { getModeInfo } from "@/modes/registry";
+import { Icon } from "@/shared/icons";
 import { ConnectionDot } from "@/rooms/components/atoms/ConnectionDot";
 import { PlayerList } from "@/rooms/components/molecules/PlayerList";
-import { ModeSelector } from "@/modes/components/ModeSelector";
-import { VotePanel } from "@/modes/components/VotePanel";
-import { ActiveModeBanner } from "@/modes/components/ActiveModeBanner";
 
 type Props = {
   players: Player[];
@@ -23,11 +22,7 @@ type Props = {
   isHost: boolean;
   modeSelection: ModeSelectionState;
   readyPlayers: string[];
-  onStartVote: () => void;
-  onVote: (mode: GameModeId) => void;
-  onEndVote: () => void;
-  onHostSelect: (mode: GameModeId) => void;
-  onChangeMode: () => void;
+  onOpenModeSelection: () => void;
   onToggleReady: () => void;
   onStartGame: () => void;
   gamePhase?: GamePhase;
@@ -45,11 +40,7 @@ export function PlayerSidebar({
   isHost,
   modeSelection,
   readyPlayers,
-  onStartVote,
-  onVote,
-  onEndVote,
-  onHostSelect,
-  onChangeMode,
+  onOpenModeSelection,
   onToggleReady,
   onStartGame,
   gamePhase = "lobby",
@@ -134,48 +125,69 @@ export function PlayerSidebar({
             </div>
           )}
 
+          {!isPlaying && (
+            <button
+              type="button"
+              onClick={onOpenModeSelection}
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-left transition hover:border-white/20 hover:bg-white/10"
+            >
+              <div className="flex items-center gap-3">
+                {modeSelection.type === "none" && (
+                  <span className="text-xl">🎮</span>
+                )}
+                {modeSelection.type === "voting" && (
+                  <span className="text-xl">🗳️</span>
+                )}
+                {(modeSelection.type === "host_picked" || modeSelection.type === "voting_complete") && (
+                  <Icon name={getModeInfo(modeSelection.mode)?.icon ?? "helpCircle"} className="h-6 w-6 text-cyan-400" />
+                )}
+
+                <div className="min-w-0 flex-1">
+                  {modeSelection.type === "none" && (
+                    <>
+                      <p className="text-xs font-medium text-slate-300">{t("modes.heading")}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {isHost ? t("modes.hostPicking") : t("modes.hostChoosing")}
+                      </p>
+                    </>
+                  )}
+                  {modeSelection.type === "voting" && (
+                    <>
+                      <p className="text-xs font-medium text-slate-300">{t("modes.voteTitle")}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {Object.keys(modeSelection.votes).length}/{modeSelection.candidates.length} {t("modes.voted")}
+                      </p>
+                    </>
+                  )}
+                  {(modeSelection.type === "host_picked" || modeSelection.type === "voting_complete") && (
+                    <>
+                      <p className="text-xs font-medium text-slate-300">
+                        {getModeInfo(modeSelection.mode) ? t(getModeInfo(modeSelection.mode)!.nameKey) : ""}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        {getModeInfo(modeSelection.mode) ? t(getModeInfo(modeSelection.mode)!.descriptionKey) : ""}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {(isHost || modeSelection.type === "voting") && (
+                  <span className="shrink-0 text-[11px] font-medium text-cyan-400">
+                    {modeSelection.type === "none" && `${t("modes.select")} →`}
+                    {modeSelection.type === "voting" && `${t("modes.voteFor")} →`}
+                    {(modeSelection.type === "host_picked" || modeSelection.type === "voting_complete") && `${t("modes.changeMode")} →`}
+                  </span>
+                )}
+              </div>
+            </button>
+          )}
+
           <div className="max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-3">
             <PlayerList players={players} hostId={hostId} />
-            {!isPlaying && modeSelection.type === "none" && !isHost && (
-              <div className="mt-2 flex flex-col items-center gap-2 border-t border-white/10 pt-3">
-                <p className="text-xs text-slate-400">{t("modes.hostChoosing")}</p>
-                <div className="morph-rectangle h-8 w-3/4 rounded-xl border border-cyan-500/30 bg-cyan-500/5" />
-              </div>
-            )}
           </div>
 
           {!isPlaying && (
             <>
-              <div className="border-t border-white/10 pt-3">
-                {modeSelection.type === "none" && isHost && (
-                  <ModeSelector
-                    playerCount={playerCount}
-                    onSelect={onHostSelect}
-                    onStartVote={onStartVote}
-                  />
-                )}
-                {modeSelection.type === "voting" && (
-                  <VotePanel
-                    candidates={modeSelection.candidates}
-                    votes={modeSelection.votes}
-                    myPlayerId={myId ?? ""}
-                    isHost={isHost}
-                    onVote={onVote}
-                    onEndVote={onEndVote}
-                  />
-                )}
-                {(modeSelection.type === "host_picked" || modeSelection.type === "voting_complete") && (
-                  <div className="flex flex-col gap-2">
-                    <ActiveModeBanner
-                      mode={modeSelection.mode}
-                      isHost={isHost}
-                      onChangeMode={onChangeMode}
-                    />
-                    <p className="text-xs text-slate-500">{t("room.sidebar.waitingPlayers")}</p>
-                  </div>
-                )}
-              </div>
-
               <div className="mt-auto flex flex-col gap-2 lg:sticky lg:bottom-4">
                 {showStartConfirm && (
                   <div className="flex flex-col gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2">

@@ -8,6 +8,7 @@ import { useUsername } from "@/shared/context/UsernameContext";
 import { NamePrompt } from "@/shared/components/NamePrompt";
 import { ConnectionDot } from "@/rooms/components/atoms/ConnectionDot";
 import { PlayerSidebar } from "@/rooms/components/organisms/PlayerSidebar";
+import { ModeSelectionModal } from "@/rooms/components/organisms/ModeSelectionModal";
 import { RoomCanvas } from "@/rooms/components/organisms/RoomCanvas";
 import { ChatBox } from "@/network/client/components/ChatBox";
 import { useRoomOrchestrator } from "@/network/client/useRoomOrchestrator";
@@ -26,7 +27,7 @@ export function RoomTemplate({ roomId }: Props) {
   const { username, setUsername } = useUsername();
   const [roomPassword] = useState(() => getRoomPassword(roomId));
   const {
-    state, sendChat, sendStroke, sendUndo, sendClear,
+    state, sendChat, sendStroke, sendUndo,
     leaveRoom, startVote, castVote, endVote, hostSelectMode,
     changeMode, toggleReady, startGame, restartGame,
     telephoneSubmitPhrase, telephoneSubmitDrawing, telephoneSubmitDescription,
@@ -38,6 +39,7 @@ export function RoomTemplate({ roomId }: Props) {
   );
   const [dismissed, setDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   const hydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -168,11 +170,7 @@ export function RoomTemplate({ roomId }: Props) {
             isHost={isHost}
             modeSelection={state.modeSelection}
             readyPlayers={state.readyPlayers}
-            onStartVote={() => startVote(getAvailableModes(state.players.length).map((m) => m.id))}
-            onVote={castVote}
-            onEndVote={endVote}
-            onHostSelect={hostSelectMode}
-            onChangeMode={changeMode}
+            onOpenModeSelection={() => setIsModeModalOpen(true)}
             onToggleReady={toggleReady}
             onStartGame={startGame}
             gamePhase={state.gamePhase}
@@ -237,7 +235,6 @@ export function RoomTemplate({ roomId }: Props) {
                 myId={state.myId}
                 hostId={state.hostId}
                 onUndo={sendUndo}
-                onClear={sendClear}
                 peerStatus={state.peerStatus}
               />
             </div>
@@ -256,6 +253,20 @@ export function RoomTemplate({ roomId }: Props) {
           )}
         </div>
       </div>
+
+      <ModeSelectionModal
+        isOpen={isModeModalOpen}
+        onClose={() => setIsModeModalOpen(false)}
+        modeSelection={state.modeSelection}
+        isHost={isHost}
+        playerCount={state.players.length}
+        myPlayerId={state.myId ?? ""}
+        onHostSelect={hostSelectMode}
+        onStartVote={() => startVote(getAvailableModes(state.players.length).map((m) => m.id))}
+        onVote={castVote}
+        onEndVote={endVote}
+        onChangeMode={changeMode}
+      />
 
       {showPrompt && (
         <NamePrompt

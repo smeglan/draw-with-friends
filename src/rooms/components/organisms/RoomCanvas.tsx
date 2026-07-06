@@ -12,7 +12,6 @@ type Props = {
   strokes: StrokeData[];
   onStrokeComplete: (stroke: StrokeData) => void;
   onUndo: () => void;
-  onClear: () => void;
   myId: string | null;
   hostId: string | null;
   peerStatus: PeerStatus;
@@ -22,7 +21,6 @@ export function RoomCanvas({
   strokes,
   onStrokeComplete,
   onUndo,
-  onClear,
   myId,
   hostId,
   peerStatus,
@@ -44,16 +42,17 @@ export function RoomCanvas({
     previewCanvasRef,
     containerRef,
     canvasSize,
+    activeTool,
     brushColor,
     brushSize,
     strokesCount,
+    setActiveTool,
     setBrushColor,
     setBrushSize,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     handleUndo,
-    handleClear,
     syncStrokeActions,
     initCanvas,
   } = useMiniCanvas({
@@ -81,11 +80,6 @@ export function RoomCanvas({
     handleUndo();
     onUndo();
   }, [handleUndo, onUndo]);
-
-  const handleClearClick = useCallback(() => {
-    handleClear();
-    onClear();
-  }, [handleClear, onClear]);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col xl:flex-row">
@@ -138,14 +132,18 @@ export function RoomCanvas({
           </button>
           <button
             type="button"
-            onClick={handleClearClick}
-            disabled={strokesCount === 0}
-            className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-slate-400 transition hover:border-red-400/40 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label={t("canvas.clear")}
-            title={t("canvas.clearCanvas")}
+            onClick={() => setActiveTool(activeTool === "brush" ? "eraser" : "brush")}
+            className={[
+              "flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs transition",
+              activeTool === "eraser"
+                ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-300"
+                : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white",
+            ].join(" ")}
+            aria-label={t("tools.eraser")}
+            title={t("tools.eraser")}
           >
-            <Icon name="trash" className="h-3.5 w-3.5" />
-            {t("canvas.clear")}
+            <Icon name="eraser" className="h-3.5 w-3.5" />
+            {activeTool === "eraser" ? t("tools.brush") : t("tools.eraser")}
           </button>
         </div>
       </div>

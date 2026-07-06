@@ -20,6 +20,12 @@
 - Historial de colores -- ok --
 
 
+## Errores
+
+- La tableta no funciona bien la herramienta de dibujo, toma el dibujar como zoom
+- Al hacer mucho puntos seguido, se bloquea
+
+
 
 
 

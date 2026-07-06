@@ -272,6 +272,7 @@
     "startVote": "Iniciar votación",
     "endVote": "Finalizar votación",
     "changeMode": "Cambiar modo",
+    "needsPlayers": "Necesita {count}",
     "waitingHost": "Esperando que el host configure el modo de juego...",
     "voteTitle": "Votación activa",
     "voteFor": "Votar",

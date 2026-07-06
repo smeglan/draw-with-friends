@@ -1,11 +1,10 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import type { CanvasAction, FillAction, Layer, Stroke } from "@/canvas/types";
-import { isFillAction, isShapeAction } from "@/canvas/types";
-import { renderStroke } from "@/canvas/utils/renderStroke";
-import { renderShapeOutline } from "@/canvas/utils/renderShape";
-import { applyFillToImageData, getTargetColor, hexToRgba } from "@/canvas/utils/floodFill";
+import type { CanvasAction, FillAction, Layer } from "@/canvas/types";
+import { isFillAction } from "@/canvas/types";
+import { getTargetColor, hexToRgba } from "@/canvas/utils/floodFill";
+import { renderCanvasAction } from "@/canvas/utils/renderAction";
 
 type LayerCache = {
   canvas: HTMLCanvasElement;
@@ -77,6 +76,20 @@ export function useCanvasRendering(
     }
   };
 
+  const renderActionToCache = (
+    ctx: CanvasRenderingContext2D,
+    action: CanvasAction,
+    width: number,
+    height: number,
+    scale: number,
+  ) => {
+    renderCanvasAction(ctx, action, {
+      canvasWidth: width,
+      canvasHeight: height,
+      canvasScale: scale,
+    });
+  };
+
   const redrawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -114,11 +127,12 @@ export function useCanvasRendering(
         continue;
       }
 
-      // Check if this is a single new fill action appended to the previous state
-      const isSingleNewFill =
+      const isSingleAppend =
         layerActions.length === cache.renderedActions.length + 1 &&
-        isFillAction(layerActions[layerActions.length - 1]) &&
         areActionsEqual(layerActions.slice(0, -1), cache.renderedActions);
+
+      // Check if this is a single new fill action appended to the previous state
+      const isSingleNewFill = isSingleAppend && isFillAction(layerActions[layerActions.length - 1]);
 
       if (isSingleNewFill && workerRef.current) {
         const fillAction = layerActions[layerActions.length - 1] as FillAction;
@@ -167,40 +181,20 @@ export function useCanvasRendering(
         }
       }
 
+      if (isSingleAppend) {
+        const ctx = cache.context;
+        const appendedAction = layerActions[layerActions.length - 1];
+        renderActionToCache(ctx, appendedAction, currentWidth, currentHeight, currentScale);
+        cache.renderedActions = layerActions;
+        continue;
+      }
+
       // Fallback: Synchronous rebuild of layer cache in chronological order
       const ctx = cache.context;
       ctx.clearRect(0, 0, currentWidth, currentHeight);
 
       for (const action of layerActions) {
-        if (action.type === "raster") {
-          if (action.imageData instanceof ImageData) {
-            ctx.putImageData(action.imageData, 0, 0);
-          } else {
-            const { data, width, height } = action.imageData as unknown as {
-              data: number[];
-              width: number;
-              height: number;
-            };
-            ctx.putImageData(new ImageData(new Uint8ClampedArray(data), width, height), 0, 0);
-          }
-        } else if (action.type === "fill") {
-          const imageData = ctx.getImageData(0, 0, currentWidth, currentHeight);
-          applyFillToImageData(
-            imageData,
-            currentWidth,
-            currentHeight,
-            action.x,
-            action.y,
-            action.color,
-            currentScale,
-            action.tolerance
-          );
-          ctx.putImageData(imageData, 0, 0);
-        } else if (isShapeAction(action)) {
-          renderShapeOutline(ctx, action, currentScale);
-        } else {
-          renderStroke(ctx, action as Stroke, currentScale);
-        }
+        renderActionToCache(ctx, action, currentWidth, currentHeight, currentScale);
       }
 
       cache.renderedActions = layerActions;

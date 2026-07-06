@@ -16,6 +16,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [activeTool, setActiveTool] = useState<"brush" | "eraser">("brush");
   const [brushColor, setBrushColor] = useState("#111827");
   const [brushSize, setBrushSize] = useState<number>(DRAWING_LIMITS.defaultBrushSize);
   const [brushOpacity] = useState(DRAWING_LIMITS.defaultOpacity);
@@ -53,7 +54,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
     for (const s of newStrokes) {
       const stroke: Stroke = {
         type: "stroke",
-        tool: "brush",
+        tool: s.tool ?? "brush",
         color: s.color,
         size: s.size,
         points: s.points,
@@ -125,7 +126,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
 
     const stroke: Stroke = {
       type: "stroke",
-      tool: "brush",
+      tool: activeTool,
       color: brushColor,
       size: brushSize,
       points: [point],
@@ -137,7 +138,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
 
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx) renderStrokeDot(ctx, point, stroke, 1);
-  }, [brushColor, brushSize, brushOpacity]);
+  }, [activeTool, brushColor, brushSize, brushOpacity]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     if (!currentStrokeRef.current || !lastPointRef.current) return;
@@ -190,6 +191,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
         color: stroke.color,
         size: stroke.size,
         opacity: stroke.opacity,
+        tool: stroke.tool,
       });
     }
 
@@ -214,7 +216,7 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
   const addRemoteStroke = useCallback((data: StrokeData) => {
     const stroke: Stroke = {
       type: "stroke",
-      tool: "brush",
+      tool: data.tool ?? "brush",
       color: data.color,
       size: data.size,
       points: data.points,
@@ -231,9 +233,11 @@ export function useMiniCanvas({ onStrokeComplete }: UseMiniCanvasOptions = {}) {
     previewCanvasRef,
     containerRef,
     canvasSize,
+    activeTool,
     brushColor,
     brushSize,
     strokesCount,
+    setActiveTool,
     setBrushColor,
     setBrushSize,
     handlePointerDown,

@@ -29,6 +29,7 @@ export type StrokeData = {
   color: string;
   size: number;
   opacity: number;
+  tool?: "brush" | "eraser";
 };
 
 export type TelephoneChainLink =

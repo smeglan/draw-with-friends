@@ -7,7 +7,7 @@ import { useElementSize } from "@/shared/hooks/useElementSize";
 import type { CanvasAction, CanvasDimensions, Layer, Point, Stroke } from "@/canvas/types";
 import { createLayerId, isFillAction } from "@/canvas/types";
 import type { ToolContext } from "@/canvas/tools/ITool";
-import { renderStrokeSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
+import { renderStrokeSegment, renderStrokeCurveSegment, renderStrokeDot } from "@/canvas/utils/renderStroke";
 import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import { clamp } from "@/shared/utils/clamp";
 
@@ -139,6 +139,7 @@ export function useDrawingBoard() {
   const stateRef = useRef(state);
   const historyRef = useRef(history);
   const persistenceRef = useRef(persistence);
+  const consolidationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     panRef.current = pan;
@@ -147,6 +148,38 @@ export function useDrawingBoard() {
     historyRef.current = history;
     persistenceRef.current = persistence;
   });
+
+  useEffect(() => {
+    return () => {
+      if (consolidationTimerRef.current) {
+        clearTimeout(consolidationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const scheduleActionConsolidation = useCallback(() => {
+    if (consolidationTimerRef.current) {
+      clearTimeout(consolidationTimerRef.current);
+    }
+
+    consolidationTimerRef.current = setTimeout(() => {
+      const s = stateRef.current;
+      const h = historyRef.current;
+      const canvas = s.canvasRef.current;
+      if (!canvas || h.actionsRef.current.length < 16) return;
+
+      h.actionsRef.current = consolidateActions(
+        h.actionsRef.current,
+        layersRef.current,
+        canvas.width,
+        canvas.height,
+        s.canvasScaleRef.current,
+      );
+      h.setStrokesCount(h.actionsRef.current.length);
+      s.redrawCanvas();
+      persistenceRef.current.triggerAutosave();
+    }, 1200);
+  }, [layersRef]);
 
   const handleCanvasSizeChange = useCallback((nextSize: CanvasDimensions) => {
     const prevSize = canvasSizeRef.current;
@@ -203,6 +236,16 @@ export function useDrawingBoard() {
           ? { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 }
           : stroke;
         renderStrokeSegment(ctx, from, to, p, s.canvasScaleRef.current);
+      },
+      renderStrokeCurveSegment: (from: Point, control: Point, to: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
+        const canvas = s.canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const p = stroke.tool === "eraser"
+          ? { tool: "brush" as const, color: "rgba(100,150,255,0.15)", size: stroke.size, opacity: 100 }
+          : stroke;
+        renderStrokeCurveSegment(ctx, from, control, to, p, s.canvasScaleRef.current);
       },
       renderStrokeDot: (point: Point, stroke: Pick<Stroke, "tool" | "color" | "size" | "opacity">) => {
         const canvas = s.canvasRef.current;
@@ -331,20 +374,14 @@ export function useDrawingBoard() {
       if (h.actionsRef.current.length > before) {
         h.clearRedoStack();
       }
-      h.actionsRef.current = consolidateActions(
-        h.actionsRef.current,
-        layersRef.current,
-        s.canvasRef.current?.width || 0,
-        s.canvasRef.current?.height || 0,
-        s.canvasScaleRef.current
-      );
       const lastAction = h.actionsRef.current[h.actionsRef.current.length - 1];
       if (lastAction && isFillAction(lastAction)) {
         s.redrawCanvas();
       }
       h.setStrokesCount(h.actionsRef.current.length);
+      scheduleActionConsolidation();
     }
-  }, []);
+  }, [scheduleActionConsolidation]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     // Track pointer position for pinch detection
@@ -393,9 +430,10 @@ export function useDrawingBoard() {
           h.clearRedoStack();
         }
         h.setStrokesCount(h.actionsRef.current.length);
+        scheduleActionConsolidation();
       }
     });
-  }, [applyPinchZoom]);
+  }, [applyPinchZoom, scheduleActionConsolidation]);
 
   const handlePointerUp = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
     if (rAFRef.current !== null) {
@@ -431,18 +469,11 @@ export function useDrawingBoard() {
       if (h.actionsRef.current.length > before) {
         h.clearRedoStack();
       }
-      const s = stateRef.current;
-      h.actionsRef.current = consolidateActions(
-        h.actionsRef.current,
-        layersRef.current,
-        s.canvasRef.current?.width || 0,
-        s.canvasRef.current?.height || 0,
-        s.canvasScaleRef.current
-      );
       h.setStrokesCount(h.actionsRef.current.length);
       persistenceRef.current.triggerAutosave();
+      scheduleActionConsolidation();
     }
-  }, []);
+  }, [scheduleActionConsolidation]);
 
   return {
     stageRef,
@@ -485,10 +516,10 @@ export function useDrawingBoard() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleUndo: () => { history.handleUndo(); persistence.triggerAutosave(); },
-    handleRedo: () => { history.handleRedo(); persistence.triggerAutosave(); },
+    handleUndo: () => { history.handleUndo(); persistence.triggerAutosave(); scheduleActionConsolidation(); },
+    handleRedo: () => { history.handleRedo(); persistence.triggerAutosave(); scheduleActionConsolidation(); },
     redoCount: history.redoCount,
-    handleClear: () => { history.handleClear(); persistence.triggerAutosave(); },
+    handleClear: () => { history.handleClear(); persistence.triggerAutosave(); scheduleActionConsolidation(); },
     layers,
     activeLayerId,
     selectedLayerIds: layersManager.selectedLayerIds,
