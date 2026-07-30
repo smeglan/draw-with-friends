@@ -296,6 +296,26 @@
     "pictionary": {
       "name": "Pinturillo",
       "description": "Uno dibuja, los otros adivinan. Puntos por velocidad."
+    },
+    "configuration": {
+      "status": {
+        "votingMode": "La sala estÃ¡ eligiendo el modo de juego.",
+        "votingPrompt": "La sala estÃ¡ eligiendo la temÃ¡tica.",
+        "configureNow": "RevisÃ¡ las opciones y confirmÃ¡ la configuraciÃ³n.",
+        "waitingConfiguration": "Esperando que el host termine la configuraciÃ³n.",
+        "configured": "ConfiguraciÃ³n completa. Marcate listo cuando quieras."
+      },
+      "modalTitle": "Prepará la partida",
+      "modalHint": "Elegí quién decide el modo y configurá sus reglas.",
+      "hostChoice": "Yo configuro la partida",
+      "hostChoiceHint": "Elegís el modo y sus opciones antes de iniciar.",
+      "roomChoice": "Que lo decida la sala",
+      "roomChoiceHint": "La sala vota el modo y las decisiones principales.",
+      "title": "Configuración del modo",
+      "chooseMode": "Elegí un modo para ver sus opciones.",
+      "masterpiecePrompt": "Temática",
+      "noOptions": "Este modo todavía no tiene opciones adicionales configurables.",
+      "confirm": "Confirmar configuración"
     }
   },
   "telephone": {
@@ -332,8 +352,20 @@
     "votingHint": "Tocá un dibujo para votar (no podés votarte a vos mismo)",
     "votedLabel": "✓ Votado",
     "votedFor": "Votaste a {name}",
+    "viewerTitle": "Admira el dibujo",
+    "closeViewer": "Cerrar visor del dibujo",
+    "downloadDrawing": "Descargar dibujo",
+    "confirmVote": "Confirmar voto",
     "resultsTitle": "Ranking final",
     "resultsSubtitle": "Cómo quedaron los votos",
+    "promptVoteTitle": "Elijan la temática",
+    "promptProposalTitle": "Propongan una temática",
+    "promptVoteHint": "Voten la temática que la sala debería dibujar",
+    "promptProposalHint": "Cada jugador puede proponer una temática",
+    "submitProposal": "Proponer",
+    "proposalSubmitted": "Tu propuesta fue agregada",
+    "startPromptVote": "Iniciar votación",
+    "endPromptVote": "Finalizar votación",
     "voteCount": "{count} voto{count, plural, one {} other {s}}"
   }
 }

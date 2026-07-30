@@ -149,6 +149,26 @@ export function useRoomOrchestrator(
     orchRef.current?.setMasterpiecePrompt(prompt);
   }, []);
 
+  const selectSetupMethod = useCallback((method: "host_configures" | "room_decides") => {
+    orchRef.current?.selectSetupMethod(method);
+  }, []);
+
+  const submitMasterpiecePromptProposal = useCallback((text: string) => {
+    orchRef.current?.submitMasterpiecePromptProposal(text);
+  }, []);
+
+  const startMasterpiecePromptVote = useCallback(() => {
+    orchRef.current?.startMasterpiecePromptVote();
+  }, []);
+
+  const voteMasterpiecePrompt = useCallback((proposalId: string) => {
+    orchRef.current?.voteMasterpiecePrompt(proposalId);
+  }, []);
+
+  const endMasterpiecePromptVote = useCallback(() => {
+    orchRef.current?.endMasterpiecePromptVote();
+  }, []);
+
   return {
     state,
     sendChat,
@@ -171,6 +191,11 @@ export function useRoomOrchestrator(
     masterpieceSubmitDrawing,
     masterpieceSubmitVote,
     setMasterpiecePrompt,
+    selectSetupMethod,
+    submitMasterpiecePromptProposal,
+    startMasterpiecePromptVote,
+    voteMasterpiecePrompt,
+    endMasterpiecePromptVote,
     orchRef,
   };
 }

@@ -13,9 +13,14 @@ export function useCanvasTools() {
   const [brushOpacity, setBrushOpacityRaw] = useState<number>(DRAWING_LIMITS.defaultOpacity);
   const [brushColor, setBrushColor] = useState<string>(QUICK_COLORS[0]);
   const [bucketSensitivity, setBucketSensitivityRaw] = useState<number>(BUCKET_LIMITS.defaultSensitivity);
-  const [activeTool, setActiveTool] = useState<DrawingTool>("brush");
-  const previousToolRef = useRef<DrawingTool>("brush");
+  const [activeTool, setActiveToolState] = useState<DrawingTool>("brush");
+  const activeToolRef = useRef<DrawingTool>("brush");
   const [selectedShape, setSelectedShapeRaw] = useState<ShapeType>("rectangle");
+
+  const setActiveTool = useCallback((tool: DrawingTool) => {
+    activeToolRef.current = tool;
+    setActiveToolState(tool);
+  }, []);
 
   const handleBrushSizeChange = useCallback((value: number) => {
     setBrushSizeRaw(clamp(value, DRAWING_LIMITS.minBrushSize, DRAWING_LIMITS.maxBrushSize));
@@ -46,7 +51,7 @@ export function useCanvasTools() {
     bucketSensitivity,
     activeTool,
     selectedShape,
-    previousToolRef,
+    activeToolRef,
     setBrushColor,
     setActiveTool,
     handleBrushSizeChange,

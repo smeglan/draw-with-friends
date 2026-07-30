@@ -32,7 +32,7 @@ export class BrushTool implements ITool {
     if (!this.isDrawing || !this.currentStroke || !this.lastPoint) return;
 
     const threshold = 1;
-    const sampleSpacing = 6;
+    const sampleSpacing = Math.max(4, ctx.brushSize * 0.6);
     const dx = point.x - this.lastPoint.x;
     const dy = point.y - this.lastPoint.y;
     const dist = Math.sqrt(dx * dx + dy * dy);

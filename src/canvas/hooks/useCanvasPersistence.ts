@@ -16,6 +16,7 @@ type Deps = {
   layersRef: { current: Layer[] };
   activeLayerIdRef: { current: string };
   canvasSizeRef: { current: CanvasDimensions };
+  interactionRef: { current: "idle" | "drawing" | "panning" | "pinching" };
   onRestore: (data: ProjectFile) => void;
 };
 
@@ -24,6 +25,7 @@ export function useCanvasPersistence({
   layersRef,
   activeLayerIdRef,
   canvasSizeRef,
+  interactionRef,
   onRestore,
 }: Deps) {
   const [hasAutosave, setHasAutosave] = useState(() => autosaveLoad() !== null);
@@ -78,9 +80,25 @@ export function useCanvasPersistence({
   const triggerAutosave = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      autosaveSave(gatherData());
+      // localStorage and JSON.stringify are synchronous. Never run them
+      // while the user is dragging, zooming, or drawing.
+      if (interactionRef.current !== "idle") {
+        triggerAutosave();
+        return;
+      }
+
+      const save = () => autosaveSave(gatherData());
+      const idleWindow = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+      };
+
+      if (idleWindow.requestIdleCallback) {
+        idleWindow.requestIdleCallback(save, { timeout: 2000 });
+      } else {
+        window.setTimeout(save, 0);
+      }
     }, 500);
-  }, [gatherData]);
+  }, [gatherData, interactionRef]);
 
   return {
     saveToFile,

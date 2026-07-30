@@ -31,7 +31,9 @@ export function RoomTemplate({ roomId }: Props) {
     leaveRoom, startVote, castVote, endVote, hostSelectMode,
     changeMode, toggleReady, startGame, restartGame,
     telephoneSubmitPhrase, telephoneSubmitDrawing, telephoneSubmitDescription,
-    masterpieceSubmitDrawing, masterpieceSubmitVote, setMasterpiecePrompt,
+    masterpieceSubmitDrawing, masterpieceSubmitVote, setMasterpiecePrompt, setTelephoneRounds,
+    selectSetupMethod, submitMasterpiecePromptProposal, startMasterpiecePromptVote,
+    voteMasterpiecePrompt, endMasterpiecePromptVote,
   } = useRoomOrchestrator(
     roomId,
     username,
@@ -211,24 +213,6 @@ export function RoomTemplate({ roomId }: Props) {
             />
           ) : (
             <div className="flex flex-1 flex-col">
-              {activeMode === "masterpiece" && state.gamePhase === "lobby" && (
-                <div className="border-b border-white/10 bg-white/[0.02] px-4 py-3">
-                  {isHost ? (
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="text"
-                        value={state.masterpiece.prompt}
-                        onChange={(e) => setMasterpiecePrompt(e.target.value)}
-                        placeholder={t("masterpiece.promptPlaceholder")}
-                        className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-cyan-500/50"
-                      />
-                      <p className="shrink-0 text-[11px] text-slate-500">{t("masterpiece.promptHint")}</p>
-                    </div>
-                  ) : (
-                    <p className="text-center text-sm text-slate-400">{t("masterpiece.waitingPrompt")}</p>
-                  )}
-                </div>
-              )}
               <RoomCanvas
                 strokes={state.strokes}
                 onStrokeComplete={handleStrokeComplete}
@@ -266,6 +250,16 @@ export function RoomTemplate({ roomId }: Props) {
         onVote={castVote}
         onEndVote={endVote}
         onChangeMode={changeMode}
+        masterpiecePrompt={state.masterpiece.prompt}
+        onSetMasterpiecePrompt={setMasterpiecePrompt}
+        telephoneRounds={state.telephone.totalRounds}
+        onSetTelephoneRounds={setTelephoneRounds}
+        roomSetup={state.roomSetup}
+        onSelectSetupMethod={selectSetupMethod}
+        onSubmitMasterpiecePromptProposal={submitMasterpiecePromptProposal}
+        onStartMasterpiecePromptVote={startMasterpiecePromptVote}
+        onVoteMasterpiecePrompt={voteMasterpiecePrompt}
+        onEndMasterpiecePromptVote={endMasterpiecePromptVote}
       />
 
       {showPrompt && (

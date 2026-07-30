@@ -5,11 +5,12 @@ import { ModeCard } from "./ModeCard";
 
 type Props = {
   playerCount: number;
+  selectedMode?: GameModeId | null;
   onSelect: (mode: GameModeId) => void;
   onStartVote: () => void;
 };
 
-export function ModeSelector({ playerCount, onSelect, onStartVote }: Props) {
+export function ModeSelector({ playerCount, selectedMode, onSelect, onStartVote }: Props) {
   const t = useTranslations();
 
   return (
@@ -22,6 +23,7 @@ export function ModeSelector({ playerCount, onSelect, onStartVote }: Props) {
           <ModeCard
             key={mode.id}
             mode={mode}
+            selected={selectedMode === mode.id}
             playerCount={playerCount}
             actionLabel={t("modes.select")}
             onAction={onSelect}

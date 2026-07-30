@@ -1,3 +1,5 @@
+import type { GameModeId, ModeConfig, ModeSetupMethod, PromptProposal } from "@/modes/types";
+
 export interface Player {
   id: string;
   username: string;
@@ -56,7 +58,14 @@ export type DataChannelMessage =
   | { type: "vote_started"; payload: { candidates: string[] } }
   | { type: "vote_cast"; payload: { playerId: string; mode: string } }
   | { type: "vote_ended"; payload: { winner: string } }
+  | { type: "setup_method_selected"; payload: { method: ModeSetupMethod } }
   | { type: "mode_selected"; payload: { mode: string } }
+  | { type: "mode_config_updated"; payload: { mode: GameModeId; config: ModeConfig; version: number } }
+  | { type: "mode_setup_reset"; payload: Record<string, never> }
+  | { type: "masterpiece_prompt_proposed"; payload: { proposal: PromptProposal } }
+  | { type: "masterpiece_prompt_vote_started"; payload: { candidates: PromptProposal[] } }
+  | { type: "masterpiece_prompt_vote_cast"; payload: { playerId: string; proposalId: string } }
+  | { type: "masterpiece_prompt_vote_ended"; payload: { winnerId: string; prompt: string; version: number } }
   | { type: "mode_reset"; payload: Record<string, never> }
   | { type: "ready_change"; payload: { playerId: string; ready: boolean } }
   | { type: "game_start"; payload: { mode: string; config: Record<string, unknown> } }

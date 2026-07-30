@@ -7,9 +7,11 @@ import type { DrawingTool } from "@/canvas/types";
 type PanDeps = {
   contentRef: RefObject<HTMLDivElement | null>;
   setActiveTool: (tool: DrawingTool) => void;
+  activeToolRef: { current: DrawingTool };
+  zoomRef: { current: number };
 };
 
-export function useCanvasPan({ contentRef, setActiveTool }: PanDeps) {
+export function useCanvasPan({ contentRef, setActiveTool, activeToolRef, zoomRef }: PanDeps) {
   const previousToolRef = useRef<DrawingTool>("brush");
   const isPanningRef = useRef(false);
   const panOffsetRef = useRef({ x: 0, y: 0 });
@@ -29,6 +31,7 @@ export function useCanvasPan({ contentRef, setActiveTool }: PanDeps) {
     }
 
     isPanningRef.current = true;
+    contentRef.current?.style.setProperty("will-change", "transform");
     panStateRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -50,15 +53,16 @@ export function useCanvasPan({ contentRef, setActiveTool }: PanDeps) {
     const newY = panState.baseY + (event.clientY - panState.startY);
 
     panOffsetRef.current = { x: newX, y: newY };
-    content.style.transform = `translate(${newX}px, ${newY}px)`;
+    content.style.transform = `translate3d(${newX}px, ${newY}px, 0) scale(${zoomRef.current})`;
   };
 
   const endPan = () => {
-    if (panStateRef.current.temporaryHand) {
+    if (panStateRef.current.temporaryHand && activeToolRef.current === "hand") {
       setActiveTool(previousToolRef.current);
     }
 
     isPanningRef.current = false;
+    contentRef.current?.style.setProperty("will-change", "auto");
     panStateRef.current = {
       pointerId: -1,
       startX: 0,

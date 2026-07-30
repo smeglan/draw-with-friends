@@ -29,6 +29,7 @@ export function useCanvasRendering(
   const layerCachesRef = useRef<Record<string, LayerCache>>({});
   const lastSizeRef = useRef({ width: 0, height: 0 });
   const lastScaleRef = useRef(0);
+  const lastActionCountRef = useRef(0);
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
@@ -76,6 +77,19 @@ export function useCanvasRendering(
     }
   };
 
+  const groupActionsByLayer = (actions: CanvasAction[]) => {
+    const groups = new Map<string, CanvasAction[]>();
+    for (const action of actions) {
+      const current = groups.get(action.layerId);
+      if (current) {
+        current.push(action);
+      } else {
+        groups.set(action.layerId, [action]);
+      }
+    }
+    return groups;
+  };
+
   const renderActionToCache = (
     ctx: CanvasRenderingContext2D,
     action: CanvasAction,
@@ -110,6 +124,12 @@ export function useCanvasRendering(
     }
 
     const visibleLayers = layersRef.current.filter((l) => l.visible);
+    const actions = actionsRef.current;
+    const actionsByLayer = groupActionsByLayer(actions);
+    const appendedAction =
+      actions.length === lastActionCountRef.current + 1
+        ? actions[actions.length - 1]
+        : null;
 
     // Clean up caches for layers that no longer exist
     const layerIds = new Set(layersRef.current.map((l) => l.id));
@@ -121,7 +141,24 @@ export function useCanvasRendering(
 
     for (const layer of visibleLayers) {
       const cache = getOrCreateLayerCache(layer.id, currentWidth, currentHeight);
-      const layerActions = actionsRef.current.filter((action) => action.layerId === layer.id);
+      const layerActions = actionsByLayer.get(layer.id) ?? [];
+
+      // Normal drawing appends one action. Avoid comparing every previous
+      // action on every stroke; only the affected layer needs rendering.
+      if (appendedAction && !isFillAction(appendedAction)) {
+        const isAffectedLayer = appendedAction.layerId === layer.id;
+        const expectedPreviousCount = isAffectedLayer
+          ? layerActions.length - 1
+          : layerActions.length;
+
+        if (cache.renderedActions.length === expectedPreviousCount) {
+          if (isAffectedLayer) {
+            renderActionToCache(cache.context, appendedAction, currentWidth, currentHeight, currentScale);
+            cache.renderedActions = layerActions;
+          }
+          continue;
+        }
+      }
 
       if (areActionsEqual(layerActions, cache.renderedActions)) {
         continue;
@@ -201,6 +238,7 @@ export function useCanvasRendering(
     }
 
     compositeLayers();
+    lastActionCountRef.current = actions.length;
   };
 
   return { redrawCanvas };

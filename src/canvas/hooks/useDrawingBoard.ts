@@ -63,6 +63,8 @@ export function useDrawingBoard() {
 
   const actionsRef = useRef<CanvasAction[]>([]);
   const redoActionsRef = useRef<CanvasAction[]>([]);
+  const canvasZoomRef = useRef(1);
+  const interactionRef = useRef<"idle" | "drawing" | "panning" | "pinching">("idle");
 
   const [layers, setLayers] = useState<Layer[]>(DEFAULT_LAYERS);
   const layersRef = useRef(DEFAULT_LAYERS);
@@ -94,6 +96,8 @@ export function useDrawingBoard() {
   const pan = useCanvasPan({
     contentRef: innerContentRef,
     setActiveTool: tools.setActiveTool,
+    activeToolRef: tools.activeToolRef,
+    zoomRef: canvasZoomRef,
   });
 
   const zoom = useCanvasZoom({
@@ -102,6 +106,7 @@ export function useDrawingBoard() {
     canvasSizeRef: state.canvasSizeRef,
     contentRef: innerContentRef,
     panOffsetRef: pan.panOffsetRef,
+    zoomRef: canvasZoomRef,
   });
 
   const palettes = useCanvasPalettes({
@@ -131,6 +136,7 @@ export function useDrawingBoard() {
     layersRef,
     activeLayerIdRef,
     canvasSizeRef,
+    interactionRef,
     onRestore,
   });
 
@@ -163,18 +169,26 @@ export function useDrawingBoard() {
     }
 
     consolidationTimerRef.current = setTimeout(() => {
+      // Rasterizing a layer can touch the entire bitmap. Defer it until the
+      // canvas is idle so it cannot interrupt a pan or pinch gesture.
+      if (interactionRef.current !== "idle") return;
+
       const s = stateRef.current;
       const h = historyRef.current;
       const canvas = s.canvasRef.current;
-      if (!canvas || h.actionsRef.current.length < 16) return;
+      if (!canvas) return;
 
-      h.actionsRef.current = consolidateActions(
-        h.actionsRef.current,
+      const currentActions = h.actionsRef.current;
+      const consolidatedActions = consolidateActions(
+        currentActions,
         layersRef.current,
         canvas.width,
         canvas.height,
         s.canvasScaleRef.current,
       );
+      if (consolidatedActions === currentActions) return;
+
+      h.actionsRef.current = consolidatedActions;
       h.setStrokesCount(h.actionsRef.current.length);
       s.redrawCanvas();
       persistenceRef.current.triggerAutosave();
@@ -267,7 +281,6 @@ export function useDrawingBoard() {
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const isPinchingRef = useRef(false);
   const previousPinchDistanceRef = useRef(0);
-
   useEffect(() => {
     return () => {
       if (rAFRef.current !== null) {
@@ -304,16 +317,10 @@ export function useDrawingBoard() {
     const newPanX = oldPan.x * ratio + originX * (1 - ratio);
     const newPanY = oldPan.y * ratio + originY * (1 - ratio);
 
-    zoom.canvasZoomRef.current = newZoom;
+    // Update pan before the public zoom setter so it can apply one combined
+    // transform instead of scheduling a second competing frame.
+    pan.panOffsetRef.current = { x: newPanX, y: newPanY };
     zoom.setCanvasZoom(newZoom);
-
-    window.requestAnimationFrame(() => {
-      pan.panOffsetRef.current = { x: newPanX, y: newPanY };
-      const content = innerContentRef.current;
-      if (content) {
-        content.style.transform = `translate(${newPanX}px, ${newPanY}px)`;
-      }
-    });
 
     previousPinchDistanceRef.current = dist;
   }, [canvasAreaRef, innerContentRef, zoom, pan]);
@@ -329,6 +336,9 @@ export function useDrawingBoard() {
     activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (activePointersRef.current.size > 1) {
+      // A second pointer changes the interaction to pinch-zoom. From this
+      // point on pointer moves must not reach a drawing tool.
+      interactionRef.current = "pinching";
       event.currentTarget.setPointerCapture(event.pointerId);
       const pointers = Array.from(activePointersRef.current.values());
       const dx = pointers[0].x - pointers[1].x;
@@ -345,6 +355,7 @@ export function useDrawingBoard() {
 
     if (event.button === 1) {
       event.preventDefault();
+      interactionRef.current = "panning";
       p.beginPan(event, t.activeTool !== "hand", t.activeTool);
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
@@ -352,6 +363,7 @@ export function useDrawingBoard() {
 
     if (t.activeTool === "hand") {
       event.preventDefault();
+      interactionRef.current = "panning";
       p.beginPan(event, false);
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
@@ -361,6 +373,8 @@ export function useDrawingBoard() {
 
     const point = getPointFromEvent(event);
     if (!point) return;
+
+    interactionRef.current = "drawing";
 
     if (t.activeTool === "brush" || t.activeTool === "eraser") {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -384,6 +398,10 @@ export function useDrawingBoard() {
   }, [scheduleActionConsolidation]);
 
   const handlePointerMove = useCallback((event: PointerEvent<HTMLCanvasElement>) => {
+    // Only pressed pointers participate in drawing or pinch detection.
+    // Hover moves must not populate the active-pointer map.
+    if (!activePointersRef.current.has(event.pointerId)) return;
+
     // Track pointer position for pinch detection
     activePointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
@@ -418,6 +436,8 @@ export function useDrawingBoard() {
         return;
       }
 
+      if (interactionRef.current !== "drawing") return;
+
       const point = getPointFromEvent(data);
       if (!point) return;
 
@@ -448,6 +468,12 @@ export function useDrawingBoard() {
       isPinchingRef.current = false;
     }
 
+    if (activePointersRef.current.size > 0 && isPinchingRef.current) {
+      interactionRef.current = "pinching";
+    } else {
+      interactionRef.current = "idle";
+    }
+
     const p = panRef.current;
     const t = toolsRef.current;
     const h = historyRef.current;
@@ -475,6 +501,17 @@ export function useDrawingBoard() {
     }
   }, [scheduleActionConsolidation]);
 
+  const handleCanvasWheel = useCallback((event: WheelEvent) => {
+    // Do not let a wheel gesture zoom while a pointer interaction is active.
+    // This prevents the canvas transform and brush rendering from competing
+    // in the same frame.
+    if (interactionRef.current !== "idle") {
+      event.preventDefault();
+      return;
+    }
+    zoom.handleCanvasWheel(event);
+  }, [zoom.handleCanvasWheel]);
+
   return {
     stageRef,
     canvasAreaRef,
@@ -483,7 +520,7 @@ export function useDrawingBoard() {
     previewCanvasRef: state.previewCanvasRef,
     canvasAreaSize,
     canvasSize: state.canvasSize,
-    handleCanvasWheel: zoom.handleCanvasWheel,
+    handleCanvasWheel,
     brushSize: tools.brushSize,
     brushOpacity: tools.brushOpacity,
     brushColor: tools.brushColor,

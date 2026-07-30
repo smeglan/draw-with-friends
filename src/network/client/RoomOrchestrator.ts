@@ -14,7 +14,7 @@ import { ChatManager } from "./ChatManager";
 import { VoteManager } from "./VoteManager";
 import { ReadyManager } from "./ReadyManager";
 import { GameLifecycle } from "@/game/GameLifecycle";
-import type { ModeSelectionState, GameModeId } from "@/modes/types";
+import type { ModeSelectionState, GameModeId, RoomSetupState, ModeSetupMethod, PromptProposal } from "@/modes/types";
 import type { TelephoneGameState } from "@/modes/telephone/types";
 import { TelephoneManager } from "@/modes/telephone/TelephoneManager";
 import type { MasterpieceGameState } from "@/modes/masterpiece/types";
@@ -25,6 +25,7 @@ export interface OrchestratorState extends RoomManagerState {
   messages: ChatMessage[];
   strokes: StrokeData[];
   modeSelection: ModeSelectionState;
+  roomSetup: RoomSetupState;
   readyPlayers: string[];
   gamePhase: GamePhase;
   telephone: TelephoneGameState;
@@ -54,6 +55,18 @@ const INITIAL_TELEPHONE: TelephoneGameState = {
   submittedPlayerIds: [],
 };
 
+const createInitialRoomSetup = (): RoomSetupState => ({
+  method: null,
+  phase: "idle",
+  selectedMode: null,
+  config: null,
+  configVersion: 0,
+  readyPlayers: [],
+  promptCandidates: [],
+  promptVotes: {},
+  promptWinnerId: null,
+});
+
 const INITIAL_STATE: OrchestratorState = {
   players: [],
   hostId: null,
@@ -65,6 +78,7 @@ const INITIAL_STATE: OrchestratorState = {
   messages: [],
   strokes: [],
   modeSelection: { type: "none" },
+  roomSetup: createInitialRoomSetup(),
   readyPlayers: [],
   gamePhase: "lobby",
   telephone: INITIAL_TELEPHONE,
@@ -148,6 +162,7 @@ export class RoomOrchestrator {
     this.setState({
       peerStatus: "idle",
       modeSelection: { type: "none" },
+      roomSetup: createInitialRoomSetup(),
       gamePhase: "lobby",
       telephone: INITIAL_TELEPHONE,
       masterpiece: INITIAL_MASTERPIECE,
@@ -253,7 +268,135 @@ export class RoomOrchestrator {
         return;
       }
 
+      if (msg.type === "mode_config_updated") {
+        // Configuration is host-owned during phase 3. Ignore updates from
+        // other peers so a client cannot overwrite the lobby setup.
+        if (this._state.hostId && senderId !== this._state.hostId) return;
+        if (msg.payload.version < this._state.roomSetup.configVersion) return;
+
+        const config = msg.payload.config;
+        if (msg.payload.mode === "masterpiece" && config.mode === "masterpiece") {
+          this.setState({
+            masterpiece: { ...this._state.masterpiece, prompt: config.prompt },
+            roomSetup: {
+              ...this._state.roomSetup,
+              phase: "configured",
+              selectedMode: "masterpiece",
+              config,
+              configVersion: msg.payload.version,
+            },
+          });
+          return;
+        }
+
+        if (
+          msg.payload.mode === "telephone" &&
+          config.mode === "telephone" &&
+          Number.isInteger(config.totalRounds) &&
+          config.totalRounds >= 1 &&
+          config.totalRounds <= 10
+        ) {
+          this.setState({
+            telephone: { ...this._state.telephone, totalRounds: config.totalRounds },
+            roomSetup: {
+              ...this._state.roomSetup,
+              phase: "configured",
+              selectedMode: "telephone",
+              config,
+              configVersion: msg.payload.version,
+            },
+          });
+        }
+        return;
+      }
+
+      if (msg.type === "setup_method_selected") {
+        if (this._state.hostId && senderId !== this._state.hostId) return;
+        this.setState({
+          roomSetup: {
+            ...this._state.roomSetup,
+            method: msg.payload.method,
+            phase: msg.payload.method === "room_decides" ? "mode_voting" : "configuring",
+          },
+        });
+        return;
+      }
+
+      if (msg.type === "masterpiece_prompt_proposed") {
+        if (this._state.roomSetup.method !== "room_decides") return;
+        if (this._state.roomSetup.selectedMode !== "masterpiece") return;
+        if (this._state.roomSetup.phase !== "configuring") return;
+        const proposal = msg.payload.proposal;
+        if (proposal.text.trim().length === 0 || proposal.text.length > 120) return;
+        const candidates = this._state.roomSetup.promptCandidates
+          .filter((item) => item.playerId !== proposal.playerId && item.id !== proposal.id);
+        this.setState({
+          roomSetup: {
+            ...this._state.roomSetup,
+            phase: "configuring",
+            selectedMode: "masterpiece",
+            promptCandidates: [...candidates, { ...proposal, text: proposal.text.trim() }],
+          },
+        });
+        return;
+      }
+
+      if (msg.type === "masterpiece_prompt_vote_started") {
+        if (this._state.hostId && senderId !== this._state.hostId) return;
+        this.setState({
+          roomSetup: {
+            ...this._state.roomSetup,
+            phase: "config_voting",
+            selectedMode: "masterpiece",
+            promptCandidates: msg.payload.candidates,
+            promptVotes: {},
+            promptWinnerId: null,
+          },
+        });
+        return;
+      }
+
+      if (msg.type === "masterpiece_prompt_vote_cast") {
+        if (this._state.roomSetup.phase !== "config_voting") return;
+        if (!this._state.roomSetup.promptCandidates.some((candidate) => candidate.id === msg.payload.proposalId)) return;
+        this.setState({
+          roomSetup: {
+            ...this._state.roomSetup,
+            promptVotes: {
+              ...this._state.roomSetup.promptVotes,
+              [msg.payload.playerId]: msg.payload.proposalId,
+            },
+          },
+        });
+        return;
+      }
+
+      if (msg.type === "masterpiece_prompt_vote_ended") {
+        if (this._state.hostId && senderId !== this._state.hostId) return;
+        const winner = this._state.roomSetup.promptCandidates.find((candidate) => candidate.id === msg.payload.winnerId);
+        if (!winner || msg.payload.prompt.trim().length === 0) return;
+        const config = {
+          mode: "masterpiece" as const,
+          promptSource: "room_vote" as const,
+          prompt: msg.payload.prompt.trim().slice(0, 120),
+        };
+        this.setState({
+          masterpiece: { ...this._state.masterpiece, prompt: config.prompt },
+          roomSetup: {
+            ...this._state.roomSetup,
+            phase: "configured",
+            selectedMode: "masterpiece",
+            config,
+            configVersion: msg.payload.version,
+            promptWinnerId: winner.id,
+          },
+        });
+        return;
+      }
+
       if (msg.type === "game_start") {
+        if (this._state.hostId && senderId !== this._state.hostId) return;
+        if (!["masterpiece", "fusion", "telephone", "pictionary"].includes(msg.payload.mode)) return;
         this.gameLifecycle.startGame(msg.payload.mode);
         this.setState({ gamePhase: "playing" });
         const mode = msg.payload.mode;
@@ -266,12 +409,21 @@ export class RoomOrchestrator {
             false,
           );
         } else if (mode === "masterpiece") {
+          const prompt = (msg.payload.config?.prompt as string) ?? "";
           this.masterpieceManager?.startGame(
             mode,
             playerIds,
             false,
-            (msg.payload.config?.prompt as string) ?? "",
+            prompt,
           );
+          this.setState({
+            roomSetup: {
+              ...this._state.roomSetup,
+              phase: "configured",
+              selectedMode: "masterpiece",
+              config: { mode: "masterpiece", promptSource: "host", prompt },
+            },
+          });
         }
         return;
       }
@@ -443,7 +595,34 @@ export class RoomOrchestrator {
       this.voteManager.attach();
       this.cleanupFns.push(
         this.voteManager.subscribe(() => {
-          this.setState({ modeSelection: this.voteManager?.modeSelection ?? { type: "none" } });
+          const modeSelection = this.voteManager?.modeSelection ?? { type: "none" };
+          const setupPatch = modeSelection.type === "voting"
+            ? { phase: "mode_voting" as const }
+            : modeSelection.type === "voting_complete"
+              ? {
+                  phase: modeSelection.mode === "masterpiece" && this._state.roomSetup.method === "room_decides"
+                    ? "configuring" as const
+                    : "mode_selected" as const,
+                  selectedMode: modeSelection.mode,
+                }
+              : {};
+          this.setState({
+            modeSelection,
+            roomSetup: { ...this._state.roomSetup, ...setupPatch },
+            ...(modeSelection.type === "none"
+              ? {
+                  roomSetup: {
+                    ...this._state.roomSetup,
+                    phase: "idle",
+                    selectedMode: null,
+                    config: null,
+                    promptCandidates: [],
+                    promptVotes: {},
+                    promptWinnerId: null,
+                  },
+                }
+              : {}),
+          });
         }),
       );
       this.setState({ modeSelection: this.voteManager.modeSelection });
@@ -458,10 +637,17 @@ export class RoomOrchestrator {
       this.readyManager.attach();
       this.cleanupFns.push(
         this.readyManager.subscribe(() => {
-          this.setState({ readyPlayers: this.readyManager?.readyPlayers ?? [] });
+          const readyPlayers = this.readyManager?.readyPlayers ?? [];
+          this.setState({
+            readyPlayers,
+            roomSetup: { ...this._state.roomSetup, readyPlayers },
+          });
         }),
       );
-      this.setState({ readyPlayers: this.readyManager.readyPlayers });
+      this.setState({
+        readyPlayers: this.readyManager.readyPlayers,
+        roomSetup: { ...this._state.roomSetup, readyPlayers: this.readyManager.readyPlayers },
+      });
     }
   }
 
@@ -588,6 +774,26 @@ export class RoomOrchestrator {
 
   startVote(candidates: GameModeId[]) {
     this.voteManager?.startVote(candidates);
+    this.setState({
+      roomSetup: { ...this._state.roomSetup, phase: "mode_voting" },
+    });
+  }
+
+  selectSetupMethod(method: ModeSetupMethod) {
+    const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    if (!isHost) return;
+    const envelope: DataChannelMessage = {
+      type: "setup_method_selected",
+      payload: { method },
+    };
+    this.broadcast(JSON.stringify(envelope));
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        method,
+        phase: method === "room_decides" ? "mode_voting" : "configuring",
+      },
+    });
   }
 
   castVote(mode: GameModeId) {
@@ -600,10 +806,36 @@ export class RoomOrchestrator {
 
   hostSelectMode(mode: GameModeId) {
     this.voteManager?.hostSelectMode(mode);
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: mode === "masterpiece" && this._state.roomSetup.config?.mode === "masterpiece"
+          ? "configured"
+          : "mode_selected",
+        selectedMode: mode,
+        config: mode === "masterpiece" && this._state.roomSetup.config?.mode === "masterpiece"
+          ? this._state.roomSetup.config
+          : null,
+        promptCandidates: mode === "masterpiece" ? this._state.roomSetup.promptCandidates : [],
+        promptVotes: mode === "masterpiece" ? this._state.roomSetup.promptVotes : {},
+        promptWinnerId: mode === "masterpiece" ? this._state.roomSetup.promptWinnerId : null,
+      },
+    });
   }
 
   changeMode() {
     this.voteManager?.changeMode();
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "idle",
+        selectedMode: null,
+        config: null,
+        promptCandidates: [],
+        promptVotes: {},
+        promptWinnerId: null,
+      },
+    });
   }
 
   toggleReady() {
@@ -614,9 +846,14 @@ export class RoomOrchestrator {
     const mode = this._state.modeSelection.type === "host_picked" || this._state.modeSelection.type === "voting_complete"
       ? this._state.modeSelection.mode
       : null;
-    if (!mode) return;
+    if (!mode || this._state.gamePhase !== "lobby") return;
 
     const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    if (!isHost) return;
+
+    const setup = this._state.roomSetup;
+    if (setup.selectedMode !== mode) return;
+    if (mode === "masterpiece" && setup.config?.mode !== "masterpiece") return;
     const playerIds = this._state.players.map((p) => p.id);
 
     let config: Record<string, unknown> = {};
@@ -625,7 +862,12 @@ export class RoomOrchestrator {
       const totalRounds = this._state.telephone.totalRounds;
       config = { totalRounds };
     } else if (mode === "masterpiece") {
-      config = { prompt: this._state.masterpiece.prompt };
+      const setupConfig = this._state.roomSetup.config;
+      config = {
+        prompt: setupConfig?.mode === "masterpiece"
+          ? setupConfig.prompt
+          : this._state.masterpiece.prompt,
+      };
     }
 
     const envelope: DataChannelMessage = {
@@ -639,7 +881,11 @@ export class RoomOrchestrator {
     if (mode === "telephone") {
       this.telephoneManager?.startGame(mode, playerIds, this._state.telephone.totalRounds, isHost);
     } else if (mode === "masterpiece") {
-      this.masterpieceManager?.startGame(mode, playerIds, isHost, this._state.masterpiece.prompt);
+      const setupConfig = this._state.roomSetup.config;
+      const prompt = setupConfig?.mode === "masterpiece"
+        ? setupConfig.prompt
+        : this._state.masterpiece.prompt;
+      this.masterpieceManager?.startGame(mode, playerIds, isHost, prompt);
     }
   }
 
@@ -651,6 +897,7 @@ export class RoomOrchestrator {
       telephone: INITIAL_TELEPHONE,
       masterpiece: INITIAL_MASTERPIECE,
       modeSelection: { type: "none" },
+      roomSetup: createInitialRoomSetup(),
       readyPlayers: [],
     });
   }
@@ -701,14 +948,168 @@ export class RoomOrchestrator {
   }
 
   setTelephoneRounds(rounds: number) {
+    const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    if (!isHost) return;
+
+    const totalRounds = Math.min(10, Math.max(1, Math.round(rounds || 1)));
+    const version = this._state.roomSetup.configVersion + 1;
+    const config = {
+      mode: "telephone" as const,
+      preset: "normal" as const,
+      totalRounds,
+    };
+    const envelope: DataChannelMessage = {
+      type: "mode_config_updated",
+      payload: { mode: "telephone", config, version },
+    };
+    this.broadcast(JSON.stringify(envelope));
     this.setState({
-      telephone: { ...this._state.telephone, totalRounds: rounds },
+      telephone: { ...this._state.telephone, totalRounds },
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "configured",
+        selectedMode: "telephone",
+        config,
+        configVersion: version,
+      },
     });
   }
 
   setMasterpiecePrompt(prompt: string) {
+    const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    if (!isHost) return;
+
+    const normalizedPrompt = prompt.trim().slice(0, 120);
+    const version = this._state.roomSetup.configVersion + 1;
+    const config = {
+      mode: "masterpiece" as const,
+      promptSource: "host" as const,
+      prompt: normalizedPrompt,
+    };
+    const envelope: DataChannelMessage = {
+      type: "mode_config_updated",
+      payload: { mode: "masterpiece", config, version },
+    };
+    this.broadcast(JSON.stringify(envelope));
     this.setState({
-      masterpiece: { ...this._state.masterpiece, prompt },
+      masterpiece: { ...this._state.masterpiece, prompt: normalizedPrompt },
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "configured",
+        selectedMode: "masterpiece",
+        config,
+        configVersion: version,
+      },
+    });
+  }
+
+  submitMasterpiecePromptProposal(text: string) {
+    const playerId = this._state.myId;
+    if (!playerId || this._state.roomSetup.method !== "room_decides") return;
+    if (this._state.roomSetup.selectedMode !== "masterpiece") return;
+    if (this._state.roomSetup.phase !== "configuring") return;
+
+    const normalizedText = text.trim().slice(0, 120);
+    if (!normalizedText) return;
+
+    const proposal: PromptProposal = {
+      id: `${playerId}-${Date.now()}`,
+      playerId,
+      text: normalizedText,
+    };
+    const envelope: DataChannelMessage = {
+      type: "masterpiece_prompt_proposed",
+      payload: { proposal },
+    };
+    this.broadcast(JSON.stringify(envelope));
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "configuring",
+        promptCandidates: [
+          ...this._state.roomSetup.promptCandidates.filter((item) => item.playerId !== playerId),
+          proposal,
+        ],
+      },
+    });
+  }
+
+  startMasterpiecePromptVote() {
+    const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    const candidates = this._state.roomSetup.promptCandidates;
+    if (!isHost || this._state.roomSetup.method !== "room_decides") return;
+    if (this._state.roomSetup.selectedMode !== "masterpiece" || this._state.roomSetup.phase !== "configuring") return;
+    if (candidates.length === 0) return;
+
+    const envelope: DataChannelMessage = {
+      type: "masterpiece_prompt_vote_started",
+      payload: { candidates },
+    };
+    this.broadcast(JSON.stringify(envelope));
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "config_voting",
+        promptVotes: {},
+        promptWinnerId: null,
+      },
+    });
+  }
+
+  voteMasterpiecePrompt(proposalId: string) {
+    if (this._state.roomSetup.phase !== "config_voting") return;
+    if (!this._state.roomSetup.promptCandidates.some((candidate) => candidate.id === proposalId)) return;
+    const playerId = this._state.myId;
+    if (!playerId) return;
+
+    const envelope: DataChannelMessage = {
+      type: "masterpiece_prompt_vote_cast",
+      payload: { playerId, proposalId },
+    };
+    this.broadcast(JSON.stringify(envelope));
+    this.setState({
+      roomSetup: {
+        ...this._state.roomSetup,
+        promptVotes: { ...this._state.roomSetup.promptVotes, [playerId]: proposalId },
+      },
+    });
+  }
+
+  endMasterpiecePromptVote() {
+    const isHost = this._state.myId !== null && this._state.myId === this._state.hostId;
+    if (!isHost || this._state.roomSetup.phase !== "config_voting") return;
+
+    const counts = new Map<string, number>();
+    for (const proposalId of Object.values(this._state.roomSetup.promptVotes)) {
+      counts.set(proposalId, (counts.get(proposalId) ?? 0) + 1);
+    }
+    if (counts.size === 0) return;
+
+    const winnerId = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0][0];
+    const winner = this._state.roomSetup.promptCandidates.find((candidate) => candidate.id === winnerId);
+    if (!winner) return;
+
+    const version = this._state.roomSetup.configVersion + 1;
+    const envelope: DataChannelMessage = {
+      type: "masterpiece_prompt_vote_ended",
+      payload: { winnerId, prompt: winner.text, version },
+    };
+    this.broadcast(JSON.stringify(envelope));
+
+    const config = {
+      mode: "masterpiece" as const,
+      promptSource: "room_vote" as const,
+      prompt: winner.text,
+    };
+    this.setState({
+      masterpiece: { ...this._state.masterpiece, prompt: winner.text },
+      roomSetup: {
+        ...this._state.roomSetup,
+        phase: "configured",
+        config,
+        configVersion: version,
+        promptWinnerId: winnerId,
+      },
     });
   }
 

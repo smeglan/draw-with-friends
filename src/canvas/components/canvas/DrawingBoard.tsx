@@ -110,7 +110,6 @@ export default function DrawingBoard() {
           innerContentRef={innerContentRef}
           canvasWidth={canvasSize.width}
           canvasHeight={canvasSize.height}
-          zoom={canvasZoom}
           activeTool={activeTool}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -161,7 +160,6 @@ export default function DrawingBoard() {
           innerContentRef={innerContentRef}
           canvasWidth={canvasSize.width}
           canvasHeight={canvasSize.height}
-          zoom={canvasZoom}
           activeTool={activeTool}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -296,7 +294,6 @@ export default function DrawingBoard() {
           innerContentRef={innerContentRef}
           canvasWidth={canvasSize.width}
           canvasHeight={canvasSize.height}
-          zoom={canvasZoom}
           activeTool={activeTool}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}

@@ -12,19 +12,34 @@ type ZoomDeps = {
   canvasSizeRef: { current: CanvasDimensions };
   contentRef: RefObject<HTMLDivElement | null>;
   panOffsetRef: { current: { x: number; y: number } };
+  zoomRef: { current: number };
 };
 
-export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef, contentRef, panOffsetRef }: ZoomDeps) {
-  const [canvasZoom, setCanvasZoom] = useState(1);
-  const canvasZoomRef = useRef(1);
+export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef, contentRef, panOffsetRef, zoomRef }: ZoomDeps) {
+  const [canvasZoom, setCanvasZoomState] = useState(1);
+  const canvasZoomRef = zoomRef;
+
+  const applyContentTransform = useCallback((x: number, y: number, zoom: number) => {
+    const content = contentRef.current;
+    if (content) {
+      content.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${zoom})`;
+    }
+  }, [contentRef]);
 
   const applyPanOffset = useCallback((x: number, y: number) => {
     panOffsetRef.current = { x, y };
-    const content = contentRef.current;
-    if (content) {
-      content.style.transform = `translate(${x}px, ${y}px)`;
-    }
-  }, [contentRef, panOffsetRef]);
+    applyContentTransform(x, y, canvasZoomRef.current);
+  }, [applyContentTransform, panOffsetRef]);
+
+  const setCanvasZoom = useCallback((nextZoom: number) => {
+    const newZoom = clamp(nextZoom, ZOOM_LIMITS.min, ZOOM_LIMITS.max);
+    canvasZoomRef.current = newZoom;
+    setCanvasZoomState(newZoom);
+    const pan = panOffsetRef.current;
+    window.requestAnimationFrame(() => {
+      applyContentTransform(pan.x, pan.y, newZoom);
+    });
+  }, [applyContentTransform, panOffsetRef]);
 
   const handleCanvasWheel = useCallback((event: WheelEvent) => {
     event.preventDefault();
@@ -51,17 +66,14 @@ export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef, co
     const newPanX = oldPan.x * ratio + clientX * (1 - ratio);
     const newPanY = oldPan.y * ratio + clientY * (1 - ratio);
 
-    setCanvasZoom(newZoom);
+    setCanvasZoomState(newZoom);
     canvasZoomRef.current = newZoom;
 
     window.requestAnimationFrame(() => {
       panOffsetRef.current = { x: newPanX, y: newPanY };
-      const content = contentRef.current;
-      if (content) {
-        content.style.transform = `translate(${newPanX}px, ${newPanY}px)`;
-      }
+      applyContentTransform(newPanX, newPanY, newZoom);
     });
-  }, [canvasAreaRef, contentRef, panOffsetRef]);
+  }, [applyContentTransform, canvasAreaRef, panOffsetRef]);
 
   const fitCanvasToScreen = useCallback(() => {
     const width = canvasAreaSize.width;
@@ -79,7 +91,7 @@ export function useCanvasZoom({ canvasAreaRef, canvasAreaSize, canvasSizeRef, co
       ZOOM_LIMITS.max,
     );
     const newZoom = Number(zoom.toFixed(2));
-    setCanvasZoom(newZoom);
+    setCanvasZoomState(newZoom);
     canvasZoomRef.current = newZoom;
 
     const newPanX = (width - cw * newZoom) / 2;

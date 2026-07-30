@@ -2,7 +2,6 @@
 
 import { memo, useEffect, useRef } from "react";
 import type { PointerEventHandler, RefObject } from "react";
-import { ZOOM_LIMITS } from "@/shared/constants/drawing";
 import type { DrawingTool } from "@/canvas/types";
 
 type DrawingCanvasProps = {
@@ -12,7 +11,6 @@ type DrawingCanvasProps = {
   innerContentRef: RefObject<HTMLDivElement | null>;
   canvasWidth: number;
   canvasHeight: number;
-  zoom: number;
   activeTool: DrawingTool;
   onPointerDown: PointerEventHandler<HTMLCanvasElement>;
   onPointerMove: PointerEventHandler<HTMLCanvasElement>;
@@ -27,7 +25,6 @@ function DrawingCanvasImpl({
   innerContentRef,
   canvasWidth,
   canvasHeight,
-  zoom,
   activeTool,
   onPointerDown,
   onPointerMove,
@@ -52,7 +49,6 @@ function DrawingCanvasImpl({
     return () => canvas.removeEventListener("wheel", handler);
   }, [canvasRef]);
 
-  const scale = Math.max(ZOOM_LIMITS.min, Math.min(ZOOM_LIMITS.max, zoom));
   const cursorClass = activeTool === "hand" ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair";
 
   return (
@@ -68,8 +64,13 @@ function DrawingCanvasImpl({
         ref={innerContentRef}
         className="relative"
         style={{
-          width: `${canvasWidth * scale}px`,
-          height: `${canvasHeight * scale}px`,
+          // Keep the canvas at its logical size. Zoom is applied with a
+          // compositor transform so pointer drawing does not resize a large
+          // CSS canvas on every zoom level.
+          width: `${canvasWidth}px`,
+          height: `${canvasHeight}px`,
+          transformOrigin: "0 0",
+          contain: "layout paint size",
         }}
       >
         <canvas

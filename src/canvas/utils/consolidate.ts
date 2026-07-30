@@ -4,6 +4,12 @@ import { renderStroke } from "@/canvas/utils/renderStroke";
 import { renderShapeOutline } from "@/canvas/utils/renderShape";
 import { applyFillToImageData } from "@/canvas/utils/floodFill";
 
+// Consolidating is intentionally batched. Keeping only a handful of actions
+// causes a full-canvas rasterization every few strokes, which is more
+// expensive than rendering those extra vector actions.
+export const CONSOLIDATION_THRESHOLD = 64;
+export const CONSOLIDATION_RETAIN_COUNT = 16;
+
 export function consolidateActions(
   actions: CanvasAction[],
   layers: Layer[],
@@ -11,12 +17,15 @@ export function consolidateActions(
   height: number,
   scale: number
 ): CanvasAction[] {
-  let updatedActions = [...actions];
+  let updatedActions = actions;
 
   for (const layer of layers) {
     const layerActions = updatedActions.filter((a) => a.layerId === layer.id);
-    if (layerActions.length > 8) {
-      const toConsolidateCount = layerActions.length - 8;
+    if (layerActions.length > CONSOLIDATION_THRESHOLD) {
+      if (updatedActions === actions) {
+        updatedActions = [...actions];
+      }
+      const toConsolidateCount = layerActions.length - CONSOLIDATION_RETAIN_COUNT;
       const toConsolidate = layerActions.slice(0, toConsolidateCount);
 
       // Create an offscreen canvas to render the consolidated actions

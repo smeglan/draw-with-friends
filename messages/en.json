@@ -291,6 +291,26 @@
     "pictionary": {
       "name": "Pictionary",
       "description": "One draws, the others guess. Points for speed."
+    },
+    "configuration": {
+      "modalTitle": "Set up the game",
+      "modalHint": "Choose who decides the mode and configure its rules.",
+      "hostChoice": "I configure the game",
+      "hostChoiceHint": "You choose the mode and its options before starting.",
+      "roomChoice": "Let the room decide",
+      "roomChoiceHint": "The room votes on the mode and the main decisions.",
+      "title": "Mode configuration",
+      "chooseMode": "Choose a mode to see its options.",
+      "masterpiecePrompt": "Theme",
+      "noOptions": "This mode does not have additional configurable options yet.",
+      "confirm": "Confirm configuration",
+      "status": {
+        "votingMode": "The room is choosing the game mode.",
+        "votingPrompt": "The room is choosing the theme.",
+        "configureNow": "Review the options and confirm the configuration.",
+        "waitingConfiguration": "Waiting for the host to finish the configuration.",
+        "configured": "Configuration complete. Mark yourself ready when you are set."
+      }
     }
   },
   "telephone": {
@@ -320,6 +340,14 @@
   "masterpiece": {
     "promptPlaceholder": "Enter a theme or leave blank for random...",
     "promptHint": "Or leave blank for a random theme",
+    "promptVoteTitle": "Choose the theme",
+    "promptProposalTitle": "Suggest a theme",
+    "promptVoteHint": "Vote for the theme the room should draw",
+    "promptProposalHint": "Each player can suggest one theme",
+    "submitProposal": "Suggest",
+    "proposalSubmitted": "Your suggestion was added",
+    "startPromptVote": "Start theme vote",
+    "endPromptVote": "Finish theme vote",
     "waitingPrompt": "Waiting for the host to set the theme...",
     "waitingTitle": "Waiting for others to finish...",
     "creatingTitle": "Your masterpiece",
@@ -327,6 +355,10 @@
     "votingHint": "Tap on a drawing to cast your vote (you can't vote for yourself)",
     "votedLabel": "✓ Voted",
     "votedFor": "You voted for {name}",
+    "viewerTitle": "Admire the drawing",
+    "closeViewer": "Close drawing viewer",
+    "downloadDrawing": "Download drawing",
+    "confirmVote": "Confirm vote",
     "resultsTitle": "Final Ranking",
     "resultsSubtitle": "How the votes turned out",
     "voteCount": "{count} vote{count, plural, one {} other {s}}"
