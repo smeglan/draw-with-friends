@@ -17,6 +17,17 @@ const INITIAL: OrchestratorState = {
   messages: [],
   strokes: [],
   modeSelection: { type: "none" },
+  roomSetup: {
+    method: null,
+    phase: "idle",
+    selectedMode: null,
+    config: null,
+    configVersion: 0,
+    readyPlayers: [],
+    promptCandidates: [],
+    promptVotes: {},
+    promptWinnerId: null,
+  },
   readyPlayers: [],
   gamePhase: "lobby",
   telephone: {
